@@ -147,7 +147,7 @@ const template = [
 	{
 		label: 'View project on GitHub',
 		click: async () => {
-		await shell.openExternal('https://github.com/eriqjaffe/sweaterfactory')
+		await shell.openExternal('https://github.com/eriqjaffe/FHM-Sweater-Factory')
 		}
 	}
 	]
