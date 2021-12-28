@@ -4,7 +4,9 @@
   "description": "FHM Sweater Factory",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "author": "Eriq Jaffe",
   "license": "ISC",
@@ -18,5 +20,30 @@
     "svgdom": "^0.1.10",
     "text-to-svg": "^3.1.5",
     "ttfinfo": "^0.2.0"
+  },
+  "build": {
+    "appId": "com.hypermodules.testapp",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "zip",
+        "dmg"
+      ]
+    },
+    "portable": {
+      "artifactName": "${productName}_${version}_portable.${ext}"
+    },
+    "nsis": {
+      "perMachine": true,
+      "artifactName": "${productName}_${version}_setup.${ext}"
+    },
+    "linux": {
+      "target": [
+        "deb",
+        "rpm",
+        "tar.gz"
+      ]
+    },
+    "deb": {}
   }
 }
