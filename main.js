@@ -11,6 +11,9 @@ const { SVG, registerWindow } = require('@svgdotjs/svg.js')
 const TextToSVG = require('text-to-svg');
 const ttfInfo = require('ttfinfo');
 const isMac = process.platform === 'darwin'
+const os = require('os');
+const tempDir = os.tmpdir()
+const url = require('url');
 
 const app2 = express()
 const port = 8080;
@@ -238,33 +241,33 @@ app2.post('/warpText', (req, res)=> {
 		} else {
 			image.autocrop();
 			image.write("tmp2.png")
-			image.write("temp.png");
+			image.write(tempDir+"/temp.png");
 			width = image.bitmap.width;
 			height = image.bitmap.height;
 			console.log(width +'x'+height)
 			switch (deform) {
 				case "arch":
-					cmdLine = 'magick convert -background transparent -wave -'+amount+'x'+width*2+' -trim +repage temp.png '+deform+'.png'
+					cmdLine = 'magick convert -background transparent -wave -'+amount+'x'+width*2+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png'
 					break;
 				case "arc":
-					cmdLine = 'magick convert temp.png -virtual-pixel Background -background transparent -distort Arc '+amount+' -trim +repage '+deform+'.png'
+					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel Background -background transparent -distort Arc '+amount+' -trim +repage '+tempDir+'/'+deform+'.png'
 					break;
 				case "bilinearUp":
 					console.log(amount)
 					console.log(((100-amount)*0.01));
 					var y2=height*((100-amount)*0.01)
-					cmdLine = 'magick convert temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+height+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+y2+'" '+deform+'.png'
+					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+height+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+y2+'" '+tempDir+'/'+deform+'.png'
 					break;
 				case "bilinearDown":
 					console.log(amount)
 					console.log(((100-amount)*0.01));
 					var y2=height*((100-amount)*0.01)
-					cmdLine = 'magick convert temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+y2+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+height+'" '+deform+'.png'
+					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+y2+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+height+'" '+tempDir+'/'+deform+'.png'
 					break;
 				case "archUp":
-					imagemagickCli.exec('magick convert temp.png -gravity west -background transparent -extent '+width*2+'x'+height+' temp.png').then(({stdout, stderr }) => {
-						imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage temp.png '+deform+'.png').then(({ stdout, stderr }) => {
-							Jimp.read(deform+'.png', (err, image) => {
+					imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity west -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
+						imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
+							Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
 								if (err) {
 									console.log(err);
 								} else {
@@ -277,9 +280,9 @@ app2.post('/warpText', (req, res)=> {
 					})
 					break;
 				case "archDown":
-					imagemagickCli.exec('magick convert temp.png -gravity east -background transparent -extent '+width*2+'x'+height+' temp.png').then(({stdout, stderr }) => {
-						imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage temp.png '+deform+'.png').then(({ stdout, stderr }) => {
-							Jimp.read(deform+'.png', (err, image) => {
+					imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity east -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
+						imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
+							Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
 								if (err) {
 									console.log(err);
 								} else {
@@ -299,7 +302,7 @@ app2.post('/warpText', (req, res)=> {
 			}
 			console.log(cmdLine);
 			imagemagickCli.exec(cmdLine).then(({ stdout, stderr }) => {
-				Jimp.read(deform+'.png', (err, image) => {
+				Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
 					if (err) {
 						console.log(err);
 					} else {
@@ -471,7 +474,11 @@ app2.post('/jitterText', (req, res) => {
 	var font_name = 'custom';
 	var font_format = 'woff2'; // best compression
 	var font_mimetype = 'font/ttf';
-	var buff = fs.readFileSync(__dirname+'\\fonts\\'+req.body.font);
+	if (req.body.font.substring(0,5) === "file:") {
+		var buff = fs.readFileSync(url.fileURLToPath(req.body.font));
+	} else {
+		var buff = fs.readFileSync(__dirname+'\\fonts\\'+req.body.font);
+	}
 	var font_data = 'data:'+font_mimetype+';charset=ascii;base64,' + buff.toString('base64')
 
 	registerWindow(window, document)
@@ -558,8 +565,12 @@ app2.get("/customFont", (req, res) => {
 		if(!result.canceled) {
 			ttfInfo(result.filePaths[0], function(err, info) {
 			var ext = getExtension(result.filePaths[0])
-				var buff = fs.readFileSync(result.filePaths[0]);
-				fs.copyFile(result.filePaths[0], __dirname + '/fonts/'+path.basename(result.filePaths[0]), (err) => {
+				//var buff = fs.readFileSync(result.filePaths[0]);
+				//console.log(tempDir)
+				var fontPath = url.pathToFileURL(tempDir + '/'+path.basename(result.filePaths[0]))
+				//console.log(fontPath.href)
+				fs.copyFile(result.filePaths[0], tempDir + '/'+path.basename(result.filePaths[0]), (err) => {
+				//fs.copyFile(result.filePaths[0], path.join(app.getAppPath(), 'resources', 'app', 'fonts', path.basename(result.filePaths[0])), (err) => {
 					if (err) {
 						console.log(err)
 					} else {
@@ -569,7 +580,7 @@ app2.get("/customFont", (req, res) => {
 							"familyName": info.tables.name[6],
 							"fontFormat": ext,
 							"fontMimetype": 'font/' + ext,
-							"fontData": path.basename(result.filePaths[0])
+							"fontData": fontPath.href
 						});
 						res.end()
 					}
