@@ -240,7 +240,6 @@ app2.post('/warpText', (req, res)=> {
 			console.log(err);
 		} else {
 			image.autocrop();
-			image.write("tmp2.png")
 			image.write(tempDir+"/temp.png");
 			width = image.bitmap.width;
 			height = image.bitmap.height;
