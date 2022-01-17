@@ -16,7 +16,7 @@ const tempDir = os.tmpdir()
 const url = require('url');
 
 const app2 = express()
-const port = 8080;
+const port = 8082;
 
 const fontArray = {
 	"Acme": "Acme-Regular.ttf",

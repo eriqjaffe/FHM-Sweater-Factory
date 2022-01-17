@@ -2015,7 +2015,7 @@
 	$("#fakeImageButton").on("click",function() {
 		$.ajax({
 			type: "GET",
-			url: "http://127.0.0.1:8080/uploadImage",
+			url: "http://127.0.0.1:8082/uploadImage",
 			success: function(data) {
 				var imgObj = new Image();
 				imgObj.src = data.image;
@@ -2452,7 +2452,7 @@
 			exportCtx.clearRect(0,0,1024,1024);
 			exportCtx.drawImage(can3,0,0);
 			exportCtx.drawImage(can4Full,0,0);
-			new CanvasSaver('http://127.0.0.1:8080/saveJersey').savePNG(document.getElementById("finalFull"), fileName, "sweater");
+			new CanvasSaver('http://127.0.0.1:8082/saveJersey').savePNG(document.getElementById("finalFull"), fileName, "sweater");
 			getDataUri("./images/fhm_cutout_2.png", function(dataUri) {
 				fabric.Image.fromURL(dataUri, function(oImg) {
 					oImg.set("scaleX",0.5);
@@ -4760,7 +4760,7 @@
 		}
 		$.ajax({
 			type: "POST",
-			url: "http://127.0.0.1:8080/archText",
+			url: "http://127.0.0.1:8082/archText",
 			data: {text:wordmarkText.text, font:wordmarkText.fontFamily.replace(/\W/g, ''), size:wordmarkText.fontSize, fill:wordmarkText.fill, fillVisible:wordmarkText.visible, stroke1Visible:wordmarkTextStroke1.visible, stroke1Color:wordmarkTextStroke1.stroke, stroke2Visible:wordmarkTextStroke2.visible, stroke2Color:wordmarkTextStroke2.stroke, amount: $("#warpAmount").val()},
 			success: function(data) {
 				console.log(data)
@@ -4820,7 +4820,7 @@
 		}
 		$.ajax({
 			type: "POST",
-			url: "http://127.0.0.1:8080/jitterText",
+			url: "http://127.0.0.1:8082/jitterText",
 			data: {text:wordmarkText.text, font:fontSources[wordmarkText.fontFamily], size:wordmarkText.fontSize, fill:wordmarkText.fill, fillVisible:wordmarkText.visible, stroke1Visible:wordmarkTextStroke1.visible, stroke1Color:wordmarkTextStroke1.stroke, stroke2Visible:wordmarkTextStroke2.visible, stroke2Color:wordmarkTextStroke2.stroke,hSpacing:$("#hSpacing").val(),vSpacing:$("#vSpacing").val()},
 			success: function(data) {
 				console.log(data)
@@ -4953,7 +4953,7 @@
 			
 			$.ajax({
 				type: "POST",
-				url: "http://127.0.0.1:8080/warpText",
+				url: "http://127.0.0.1:8082/warpText",
 				data: {deform: $("#warpEffect").val(), amount: $("#warpAmount").val(), imgdata: theImage},
 				success: function(data) {
 					var imgObj = new Image();
@@ -5104,7 +5104,7 @@
 		//$("#fontTypeCombo").removeClass().addClass('alegreya');
 		$.ajax({
 			type: "GET",
-			url: "http://127.0.0.1:8080/customFont",
+			url: "http://127.0.0.1:8082/customFont",
 			success: function(data) {
 				//console.log(data)
 				$("head").prepend("<style>@font-face {\n   font-family: '"+data.familyName+"';\n   src: url('"+data.fontData+"') format('truetype');\n}\n."+data.familyName+" { font-family: '"+data.familyName+"'; font-size: 1.1em;}\n</style>");
