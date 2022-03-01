@@ -1,6 +1,7 @@
 {
   "name": "sweaterfactory",
-  "version": "0.1.2",
+  "productName": "FHM Sweater Factory",
+  "version": "0.1.3",
   "description": "FHM Sweater Factory",
   "main": "main.js",
   "scripts": {
@@ -38,6 +39,9 @@
         "dmg"
       ]
     },
+    "win": {
+      "target": ["nsis", "portable"]
+    },
     "portable": {
       "artifactName": "${productName}_${version}_portable.${ext}"
     },
@@ -49,7 +53,10 @@
       "artifactName": "${productName}_${version}_setup.${ext}",
       "menuCategory": "OOTP Utilities",
       "shortcutName": "FHM Sweater Factory",
-      "include": "build/installer.nsh"
+      "include": "build/installer.nsh",
+      "uninstallDisplayName": "FHM Sweater Factory ${version}",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
     },
     "linux": {
       "target": [
