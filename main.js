@@ -133,6 +133,12 @@ const template = [
 	role: 'help',
 	submenu: [
 	{
+		label: 'About Franchise Hockey Manager',
+		click: async () => {    
+		await shell.openExternal('https://www.ootpdevelopments.com/franchise-hockey-manager-home/')
+		}
+	},
+	{
 		label: 'About Node.js',
 		click: async () => {    
 		await shell.openExternal('https://nodejs.org/en/about/')
