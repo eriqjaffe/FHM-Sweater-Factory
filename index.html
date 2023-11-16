@@ -3,12 +3,12 @@
 <html>
 <head>
 	<title>FHM Sweater Factory</title>
+	<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 	<link rel="icon" type="image/png" href="./images/sf_favicon.png">
 	<script type="text/javascript" src="./scripts/jquery-1.11.3.min.js"></script>
 	<script type="text/javascript" src="./scripts/spectrum.js"></script>
 	<script type="text/javascript" src="./scripts/fabric16.js"></script>
 	<script type="text/javascript" src="./scripts/context_blender.js"></script>
-	<script type="text/javascript" src="./scripts/canvassaver.js"></script>
 	<script type="text/javascript" src="./scripts/modernizr.custom.68502.js"></script>
 	<script type="text/javascript" src="./scripts/jquery.magnific-popup.min.js"></script>
 	<script type="text/javascript" src="./scripts/jquery.dd.min.js"></script>
@@ -25,6 +25,7 @@
 	<link href='./scripts/dd.css' rel='stylesheet' type='text/css'>
 	<link href='./scripts/jquery.range.css' rel='stylesheet' type='text/css'>
 	<script>
+		const { ipcRenderer } = require('electron');
 		const params = new URLSearchParams(window.location.search)
 		const port = params.get('port')
 
@@ -124,12 +125,12 @@
 					<canvas id="texture" width="512" height="512"></canvas>
 					<canvas id="below" width="512" height="512"></canvas>
 					<canvas id="final" width="512" height="512"></canvas>
-					<form id="theForm" method="post" action="./scripts/canvassaverSVG2.php">
+					<!--<form id="theForm" method="post" action="./scripts/canvassaverSVG2.php">
 						<input type="hidden" id="fileName" name="fileName" value="">
 						<input type="hidden" id="belowTexture" name="belowTexture" value="">
 						<input type="hidden" id="textureFrm" name="texture" value="">
 						<input type="hidden" id="aboveTexture" name="aboveTexture" value="">
-					</form>
+					</form>-->
 				</div>
 				<div id="canvasContainer" style="width:512px; height:575px;">
 					<div id="overlay" class="sample"></div>
@@ -2014,54 +2015,57 @@
 		palette: [ ],
 		color: "#FF0000"
 	})
+
+
 	
 	$("#fakeImageButton").on("click",function() {
-		$.ajax({
-			type: "GET",
-			url: "http://127.0.0.1:"+port+"/uploadImage",
-			success: function(data) {
-				var imgObj = new Image();
-				imgObj.src = data.image;
-				$("#fileName").html(data.filename);
-				imgObj.onload = function () {
-					// start fabricJS stuff
-					var image = new fabric.Image(imgObj);
-					image.set({
-						originX: 'center',
-						originY: 'center',
-						left: imLeft,
-						top: imTop,
-						perPixelTargetFind: true,
-						centeredScaling: true,
-						centeredRotation: true,
-						name: data.filename,
-						borderColor: 'red',
-						cornerColor: 'yellow',
-						cornerSize: 12,
-						transparentCorners: false
-					});
-					image.resizeFilters.push(new fabric.Image.filters.Resize({
-						resizeType: 'lanczos', // typo fixed
-						lanczosLobes: 2 // typo fixed
-					}));
-					image.on('object:modified',function() {
-						imLeft = image.get('left')
-						imTop = image.get('top');
-					})
-					var h = image.height;
-					var w = image.width;
-					//if ((h > 300) || (w > 300)) {
-					//	image.scale(0.5);
-					//}
-					logoCanvas.add(image);
-					image.sendBackwards();
-					
-					// end fabricJS stuff
-				}
-			}
-		});
+		ipcRenderer.send('upload-image', null)
 	})
 	
+	ipcRenderer.on('upload-image-response', (event, response) => {
+		addImage(response)
+	})
+
+	function addImage(data) {
+		var imgObj = new Image();
+		imgObj.src = data.image;
+		$("#fileName").html(data.filename);
+		imgObj.onload = function () {
+			// start fabricJS stuff
+			var image = new fabric.Image(imgObj);
+			image.set({
+				originX: 'center',
+				originY: 'center',
+				left: imLeft,
+				top: imTop,
+				perPixelTargetFind: true,
+				centeredScaling: true,
+				centeredRotation: true,
+				name: data.filename,
+				borderColor: 'red',
+				cornerColor: 'yellow',
+				cornerSize: 12,
+				transparentCorners: false
+			});
+			image.resizeFilters.push(new fabric.Image.filters.Resize({
+				resizeType: 'lanczos', // typo fixed
+				lanczosLobes: 2 // typo fixed
+			}));
+			image.on('object:modified',function() {
+				imLeft = image.get('left')
+				imTop = image.get('top');
+			})
+			var h = image.height;
+			var w = image.width;
+			//if ((h > 300) || (w > 300)) {
+			//	image.scale(0.5);
+			//}
+			logoCanvas.add(image);
+			image.sendBackwards();
+			
+			// end fabricJS stuff
+		}
+	}
 	logoCanvas.on('object:selected', function(e) {
 		$("#straightenObject").css("display","inline-block");
 		var obj = e.target;
@@ -2455,112 +2459,8 @@
 			exportCtx.clearRect(0,0,1024,1024);
 			exportCtx.drawImage(can3,0,0);
 			exportCtx.drawImage(can4Full,0,0);
-			new CanvasSaver('http://127.0.0.1:'+port+'/saveJersey').savePNG(document.getElementById("finalFull"), fileName, "sweater");
-			getDataUri("./images/fhm_cutout_2.png", function(dataUri) {
-				fabric.Image.fromURL(dataUri, function(oImg) {
-					oImg.set("scaleX",0.5);
-					oImg.set("scaleY",0.5);
-					logoCanvas.setBackgroundImage(oImg, logoCanvas.renderAll.bind(logoCanvas));
-				})
-			})
-			
-		};
-		if (defaultTexture.indexOf(".png") > -1) {
-			img.src = "./images/"+defaultTexture;
-		} else {
-			img.src = defaultTexture;
-		}
-		
-		var objects = textureFull.getObjects();
-		for (x in objects) {
-			textureFull.remove(objects[x]);
-		}
-		
-		getDataUri(img.src, function(dataUri) {
-			fabric.Image.fromURL(dataUri, function(oImg) {
-				textureFull.add(oImg);
-			})
-			textureFull.renderAll();
-		})
-	})
-
-	$("#zip").on("click",function(e) {
-		var startYear = parseInt($("#startYear").val());
-		var endYear = parseInt($("#endYear").val())
-		var yearRange = "";
-		var teamName = "";
-		if (startYear > endYear && endYear > 0) {
-			alert("The start year has to be before or equal to the end year!");
-			return false;
-		}
-		if (startYear == endYear && startYear > 0) {
-			yearRange = $("#startYear").val();
-		} else if (startYear == 0 && endYear > 0) {
-			yearRange = $("#endYear").val();
-		} else if (startYear > 0 && endYear == 0) {
-			yearRange = $("#startYear").val();
-		} else if (startYear > 0 && endYear > 0) {
-			yearRange = $("#startYear").val()+"-"+$("#endYear").val()
-		} else {
-			yearRange = ""
-		}
-		if (yearRange.length > 0) {
-			yearRange = "_"+yearRange;
-		}
-		if ($("#teamName").val().length == 0) {
-			teamName = "Unknown_Team";
-		} else {
-			teamName = $("#teamName").val().replace(/[|&;$%@"<>()+,]/g, "");
-		}
-		teamName = teamName.replace(/([^a-z0-9]+)/i, "_");
-		var fileName = "jersey_"+teamName+"_"+$("#jerseyType").val()+yearRange;
-		
-		logoCanvas.setBackgroundImage(null, logoCanvas.renderAll.bind(logoCanvas));
-
-		aboveFull.loadFromJSON(logoCanvas.toJSON(['id','visible','selectable','perPixelTargetFind','centeredScaling','centeredRotation','borderColor','cornerColor','cornerSize','name','transparentCorners']), aboveFull.renderAll.bind(aboveFull), function(o, object) {
-			object.set({
-				scaleX: object.scaleX * 2,
-				scaleY: object.scaleY * 2,
-				left: object.left * 2,
-				top: object.top * 2 
-			})
-			aboveFull.add(object);
-		});
-
-		aboveFull.renderAll();
-		
-		var img = new Image; 
-		img.onload = function(){
-			belowFull.loadFromJSON(below.toJSON(), belowFull.renderAll.bind(belowFull), function(o, object) {
-				object.set({
-					scaleX: object.scaleX * 2,
-					scaleY: object.scaleY * 2,
-					left: object.left * 2,
-					top: object.top * 2 
-				})
-				belowFull.add(object);
-			});
-			belowFull.renderAll();
-
-			textureFullCTX.drawImage(img,0,0);
-			var can3 = document.getElementById('compositeFull');
-			var compositeFull = can3.getContext('2d');
-			compositeFull.clearRect(0, 0, 1024, 1024);
-			if (Modernizr.canvasblending == true) {
-				compositeFull.globalCompositeOperation = "multiply";
-				compositeFull.drawImage(canFull, 0, 0);
-				compositeFull.drawImage(can2Full, 0, 0);
-			} else {
-				textureFullCTX.drawImage(img,0,0);
-				compositeFull.drawImage(canFull, 0, 0);
-				textureFullCTX.blendOnto(composite,'multiply');
-			}
-			var finalCanvas = document.getElementById('finalFull');
-			var exportCtx = finalCanvas.getContext('2d');
-			exportCtx.clearRect(0,0,1024,1024);
-			exportCtx.drawImage(can3,0,0);
-			exportCtx.drawImage(can4Full,0,0);
-			new CanvasSaver('./scripts/saveme.php').savePNG(document.getElementById("finalFull"), fileName, "sweater");
+			ipcRenderer.send('save-sweater', {imgdata: finalCanvas.toDataURL(), name: fileName})
+			//new CanvasSaver('http://127.0.0.1:'+port+'/saveJersey').savePNG(document.getElementById("finalFull"), fileName, "sweater");
 			getDataUri("./images/fhm_cutout_2.png", function(dataUri) {
 				fabric.Image.fromURL(dataUri, function(oImg) {
 					oImg.set("scaleX",0.5);
@@ -4501,127 +4401,6 @@
 		logoCanvas.renderAll();
 		$("#overlay").css("display","none");
 	})
-
-	$("#imgur").on("click",function(e) {
-		var finalImage = null;
-		$("#overlay").css("display","inline-block");
-		logoCanvas.setBackgroundImage(null, logoCanvas.renderAll.bind(logoCanvas));
-
-		aboveFull.loadFromJSON(logoCanvas.toJSON(['id','visible','selectable','perPixelTargetFind','centeredScaling','centeredRotation','borderColor','cornerColor','cornerSize','name','transparentCorners']), aboveFull.renderAll.bind(aboveFull), function(o, object) {
-			object.set({
-				scaleX: object.scaleX * 2,
-				scaleY: object.scaleY * 2,
-				left: object.left * 2,
-				top: object.top * 2 
-			})
-			aboveFull.add(object);
-		});
-
-		aboveFull.renderAll();
-		
-		var img = new Image; 
-		img.onload = function(){
-			belowFull.loadFromJSON(below.toJSON(), belowFull.renderAll.bind(belowFull), function(o, object) {
-				object.set({
-					scaleX: object.scaleX * 2,
-					scaleY: object.scaleY * 2,
-					left: object.left * 2,
-					top: object.top * 2 
-				})
-				belowFull.add(object);
-			});
-			belowFull.renderAll();
-
-			textureFullCTX.drawImage(img,0,0);
-			var can3 = document.getElementById('compositeFull');
-			var compositeFull = can3.getContext('2d');
-			compositeFull.clearRect(0, 0, 1024, 1024);
-			if (Modernizr.canvasblending == true) {
-				compositeFull.globalCompositeOperation = "multiply";
-				compositeFull.drawImage(canFull, 0, 0);
-				compositeFull.drawImage(can2Full, 0, 0);
-			} else {
-				textureFullCTX.drawImage(img,0,0);
-				compositeFull.drawImage(canFull, 0, 0);
-				textureFullCTX.blendOnto(composite,'multiply');
-			}
-			var finalCanvas = document.getElementById('finalFull');
-			var exportCtx = finalCanvas.getContext('2d');
-			exportCtx.clearRect(0,0,1024,1024);
-			exportCtx.drawImage(can3,0,0);
-			exportCtx.drawImage(can4Full,0,0);
-			
-			var foo = finalCanvas.toDataURL("image/png");
-
-		    if (foo.length > 502000) {
-		        finalImage = finalCanvas.toDataURL("image/jpeg",0.99);
-		    } else {
-		        finalImage = finalCanvas.toDataURL("image/png");
-		    }
-
-			$.ajax({
-				url : './scripts/imgur.php',
-				type : 'POST',
-				data : {imgdata:finalImage,watermark:'fhm_watermark.png'},
-				dataType: "json",
-				success : function(result) {
-					$("#overlay").css("display","none");
-					if (result.success == true) {
-						prompt("Image uploaded successfully!\n\nTo get the link, simply copy the text below, and then click either button...\n\n",result.data.link);
-					} else {
-						alert(result.error);
-					}
-				}
-			})
-			getDataUri("./images/fhm_cutout_2.png", function(dataUri) {
-				fabric.Image.fromURL(dataUri, function(oImg) {
-					oImg.set("scaleX",0.5);
-					oImg.set("scaleY",0.5);
-					logoCanvas.setBackgroundImage(oImg, logoCanvas.renderAll.bind(logoCanvas));
-				})
-			})
-			
-		};
-		if (defaultTexture.indexOf(".png") > -1) {
-			img.src = "./images/"+defaultTexture;
-		} else {
-			img.src = defaultTexture;
-		}
-		
-		var objects = textureFull.getObjects();
-		for (x in objects) {
-			textureFull.remove(objects[x]);
-		}
-		
-		getDataUri(img.src, function(dataUri) {
-			fabric.Image.fromURL(dataUri, function(oImg) {
-				textureFull.add(oImg);
-			})
-			textureFull.renderAll();
-		})
-		// $("#overlay").css("display","inline-block");
-
-		// logoCanvas.deactivateAll().renderAll();
-
-		// var a = below.toSVG();
-		// var b = textureCanvas.toSVG();
-		// var c = logoCanvas.toSVG();
-		
-		// $.ajax({
-			// url : './scripts/imgur2.php',
-			// type : 'POST',
-			// data : {below:a,texture:b,above:c},
-			// dataType: "json",
-			// success : function(result) {
-				// $("#overlay").css("display","none");
-				// if (result.success == true) {
-					// prompt("Image uploaded successfully!\n\nTo get the link, simply copy the text below, and then click either button...\n\n",result.data.link);
-				// } else {
-					// alert(result.error);
-				// }
-			// }
-		// })
-	})
 	
 	$("#warpEffect").on("change",function(e) {
 		initializeWarp();
@@ -4761,6 +4540,7 @@
 				logoCanvas.remove(objects[x]);
 			}
 		}
+		//ipcRenderer.send('arch-text', {text:wordmarkText.text, font:wordmarkText.fontFamily.replace(/\W/g, ''), size:wordmarkText.fontSize, fill:wordmarkText.fill, fillVisible:wordmarkText.visible, stroke1Visible:wordmarkTextStroke1.visible, stroke1Color:wordmarkTextStroke1.stroke, stroke2Visible:wordmarkTextStroke2.visible, stroke2Color:wordmarkTextStroke2.stroke, amount: $("#warpAmount").val()})
 		$.ajax({
 			type: "POST",
 			url: "http://127.0.0.1:"+port+"/archText",
@@ -4953,59 +4733,68 @@
 			var theImage = warpCanvas.toDataURL();
 
 			theImage = theImage.substr(theImage.indexOf(',') + 1).toString();
-			
-			$.ajax({
-				type: "POST",
-				url: "http://127.0.0.1:"+port+"/warpText",
-				data: {deform: $("#warpEffect").val(), amount: $("#warpAmount").val(), imgdata: theImage},
-				success: function(data) {
-					var imgObj = new Image();
-					imgObj.src = data;
-					imgObj.onload = function () {
-						var image = new fabric.Image(imgObj);
-						image.set({
-							originX: 'center',
-							originY: 'center',
-							left: wmLeft,
-							top: wmTop,
-							perPixelTargetFind: true,
-							centeredScaling: true,
-							centeredRotation: true,
-							borderColor: 'red',
-							cornerColor: 'yellow',
-							cornerSize: 12,
-							name: 'warpedText',
-							transparentCorners: false,
-							scaleX: 0.5,
-							scaleY: 0.5
-						});
-						
-						image.resizeFilters.push(new fabric.Image.filters.Resize({
-							resizeType: 'lanczos', // typo fixed
-							lanczosLobes: 2 // typo fixed
-						}));
-						
-						image.on('object:modified',function() {
-							wmLeft = image.getBoundingRect()['left'];
-							wmTop = image.getBoundingRect()['top'];
-						});
-						
-						var objects = logoCanvas.getObjects();
-						for (x in objects) {
-							if (objects[x].id == "wordmark") {
-								objects[x].visible = false;
-							}
-						}
 
-						logoCanvas.add(image);
-						logoCanvas.renderAll();
-						$("#overlay").css("display","none");
-					}
-				}
-			})
+			ipcRenderer.send('warp-text', {deform: $("#warpEffect").val(), amount: $("#warpAmount").val(), imgdata: theImage})
+
 			return false;		
 		}
 	}
+
+	ipcRenderer.on('warp-text-response', (event, response) => {
+		if (response.status == "error") {
+			alert(response.message)
+			$("#overlay").css("display","none");
+		} else {
+			let data = response.data
+			var obj = logoCanvas.getObjects('image').forEach(function(o) {
+				if (o.id == "warpedText") {
+					logoCanvas.remove(o);
+				}
+			})
+			var imgObj = new Image();
+			imgObj.src = data;
+			imgObj.onload = function () {
+				var image = new fabric.Image(imgObj);
+				image.set({
+					originX: 'center',
+					originY: 'center',
+					left: wmLeft,
+					top: wmTop,
+					perPixelTargetFind: true,
+					centeredScaling: true,
+					centeredRotation: true,
+					borderColor: 'red',
+					cornerColor: 'yellow',
+					cornerSize: 12,
+					name: 'warpedText',
+					transparentCorners: false,
+					scaleX: 0.5,
+					scaleY: 0.5
+				});
+				
+				image.resizeFilters.push(new fabric.Image.filters.Resize({
+					resizeType: 'lanczos', // typo fixed
+					lanczosLobes: 2 // typo fixed
+				}));
+				
+				image.on('object:modified',function() {
+					wmLeft = image.getBoundingRect()['left'];
+					wmTop = image.getBoundingRect()['top'];
+				});
+				
+				var objects = logoCanvas.getObjects();
+				for (x in objects) {
+					if (objects[x].id == "wordmark") {
+						objects[x].visible = false;
+					}
+				}
+
+				logoCanvas.add(image);
+				logoCanvas.renderAll();
+				$("#overlay").css("display","none");
+			}
+		}
+	})
 	
 	function isWordmarkVisible() {
 		var objects = logoCanvas.getObjects();

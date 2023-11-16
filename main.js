@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, Menu, shell } = require('electron')
+const { app, BrowserWindow, dialog, Menu, shell, ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs');
 const express = require('express');
@@ -14,9 +14,13 @@ const isMac = process.platform === 'darwin'
 const os = require('os');
 const tempDir = os.tmpdir()
 const url = require('url');
+const increment = require('add-filename-increment');
+const Store = require("electron-store")
 
 const app2 = express()
 const port = 8082;
+
+const store = new Store();
 
 const fontArray = {
 	"Acme": "Acme-Regular.ttf",
@@ -169,7 +173,9 @@ const server = app2.listen(0, () => {
 
 app2.use(express.urlencoded({limit: '50mb', extended: true, parameterLimit: 50000}));
 
-app2.get("/uploadImage", (req, res) => {
+ipcMain.on('upload-image', (event, arg) => {
+	console.log("yeah got this far")
+	let json = {}
 	dialog.showOpenDialog(null, {
 		properties: ['openFile'],
 		filters: [
@@ -182,11 +188,11 @@ app2.get("/uploadImage", (req, res) => {
 					console.log(err);
 				} else {
 					image.getBase64(Jimp.AUTO, (err, ret) => {
-						res.json({
-							"filename": path.basename(result.filePaths[0]),
-							"image": ret
-						  });
-						res.end();
+						json.filename = path.basename(result.filePaths[0]),
+						json.image = ret;
+						json.path = result.filePaths[0]
+						event.sender.send('upload-image-response', json)
+						//res.end();
 					})
 				}
 			});
@@ -196,11 +202,11 @@ app2.get("/uploadImage", (req, res) => {
 	  })
 })
 
-app2.post('/saveJersey', (req, res) => {
-	var buffer = Buffer.from(req.body.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
+ipcMain.on('save-sweater', (event, arg) => {
+	var buffer = Buffer.from(arg.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
 
 	const options = {
-		defaultPath: app.getPath('desktop') + '/' + req.body.name,
+		defaultPath: increment(store.get("downloadPath", app.getPath('downloads')) + '/' + arg.name+'.png',{fs: true})
 	}
 
 	dialog.showSaveDialog(null, options).then((result) => {
@@ -231,25 +237,27 @@ app2.post('/saveJersey', (req, res) => {
 	}).catch((err) => {
 		console.log(err);
 	});
-});
+})
 
-app2.post('/warpText', (req, res)=> {
-	var buffer = Buffer.from(req.body.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
-	var amount = req.body.amount;
-	var deform = req.body.deform;
-	var width;
-	var height;
-	var cmdLine;
-	console.log(req.body.deform)
+ipcMain.on('warp-text', (event, arg) => {
+	let buffer = Buffer.from(arg.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
+	let amount = arg.amount;
+	let deform = arg.deform;
+	let width;
+	let height;
+	let cmdLine;
+	let json = {}
 	Jimp.read(buffer, (err, image) => {
 		if (err) {
+			json.status = 'error'
+			json.message = err
 			console.log(err);
+			event.sender.send('warp-text-response', json)
 		} else {
 			image.autocrop();
 			image.write(tempDir+"/temp.png");
 			width = image.bitmap.width;
 			height = image.bitmap.height;
-			console.log(width +'x'+height)
 			switch (deform) {
 				case "arch":
 					cmdLine = 'magick convert -background transparent -wave -'+amount+'x'+width*2+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png'
@@ -258,204 +266,101 @@ app2.post('/warpText', (req, res)=> {
 					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel Background -background transparent -distort Arc '+amount+' -trim +repage '+tempDir+'/'+deform+'.png'
 					break;
 				case "bilinearUp":
-					console.log(amount)
-					console.log(((100-amount)*0.01));
 					var y2=height*((100-amount)*0.01)
 					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+height+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+y2+'" '+tempDir+'/'+deform+'.png'
 					break;
 				case "bilinearDown":
-					console.log(amount)
-					console.log(((100-amount)*0.01));
 					var y2=height*((100-amount)*0.01)
 					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+y2+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+height+'" '+tempDir+'/'+deform+'.png'
 					break;
 				case "archUp":
-					imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity west -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
-						imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
-							Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
-								if (err) {
-									console.log(err);
-								} else {
-									image.getBase64(Jimp.AUTO, (err, ret) => {
-										res.end(ret);
-									})
-								}
+					try {
+						imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity west -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
+							imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
+								Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
+									if (err) {
+										json.status = 'error'
+										json.message = err
+										console.log(err);
+										event.sender.send('warp-text-response', json)
+									} else {
+										image.getBase64(Jimp.AUTO, (err, ret) => {
+											json.status = 'success'
+											json.data = ret
+											event.sender.send('warp-text-response', json)
+											//res.end(ret);
+										})
+									}
+								})
 							})
 						})
-					})
+					} catch (err) {
+						json.status = 'error'
+						json.message = err
+						console.log(err);
+						event.sender.send('warp-text-response', json)
+					}
 					break;
 				case "archDown":
-					imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity east -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
-						imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
-							Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
-								if (err) {
-									console.log(err);
-								} else {
-									image.getBase64(Jimp.AUTO, (err, ret) => {
-										res.end(ret);
-									})
-								}
+					try {
+						imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity east -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
+							imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
+								Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
+									if (err) {
+										json.status = 'error'
+										json.message = err
+										console.log(err);
+										event.sender.send('warp-text-response', json)
+									} else {
+										image.getBase64(Jimp.AUTO, (err, ret) => {
+											json.status = 'success'
+											json.data = ret
+											event.sender.send('warp-text-response', json)
+										})
+									}
+								})
 							})
 						})
-					})
+					} catch (err) {
+						json.status = 'error'
+						json.message = err
+						console.log(err);
+						event.sender.send('warp-text-response', json)
+					}
 					break;
 				default:
 					image.getBase64(Jimp.AUTO, (err, ret) => {
-						res.end(ret);
+						json.status = 'success'
+						json.data = ret
+						event.sender.send('warp-text-response', json)
 					})
 					break;
 			}
-			console.log(cmdLine);
-			imagemagickCli.exec(cmdLine).then(({ stdout, stderr }) => {
-				Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
-					if (err) {
-						console.log(err);
-					} else {
-						image.getBase64(Jimp.AUTO, (err, ret) => {
-							res.end(ret);
-						})
-					}
+			try {
+				imagemagickCli.exec(cmdLine).then(({ stdout, stderr }) => {
+					Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
+						if (err) {
+							json.status = 'error'
+							json.message = err
+							console.log(err);
+							event.sender.send('warp-text-response', json)
+						} else {
+							image.getBase64(Jimp.AUTO, (err, ret) => {
+								json.status = 'success'
+								json.data = ret
+								event.sender.send('warp-text-response', json)
+							})
+						}
+					})
 				})
-			})
+			} catch (err) {
+				json.status = 'error'
+				json.message = err
+				console.log(err);
+				event.sender.send('warp-text-response', json)
+			}
 		}
 	})
-})
-
-app2.post('/archText', (req, res) => {
-	console.log(req.body)
-	var text = req.body.text;
-	var fill = req.body.fill;
-	var stroke1 = req.body.stroke1Color;
-	var stroke2 = req.body.stroke2Color;
-	var font = fontArray[req.body.font];
-	var size = req.body.size;
-	var stroke1Visible = (req.body.stroke1Visible === 'true');
-	var stroke2Visible = (req.body.stroke2Visible === 'true');
-	var fillVisible = (req.body.fillVisible === 'true');
-	var svg2, svg1, svg, attributes, options, doc, path, base_d, s1path, s2path, fillPath, p
-
-	registerWindow(window, document)
-
-	const canvas = SVG(document.documentElement).size(512, 512)
-
-	canvas.clear()
-
-	var textToSVG = TextToSVG.loadSync('./fonts/'+font);
-
-	if (stroke2Visible) {
-		attributes = {fill: stroke2, stroke: stroke2, 'stroke-width': '10', id: 'stroke2'};
-		options = {x: 30, y: 30, fontSize: size, anchor: 'top', attributes: attributes};
-		svg2 = textToSVG.getPath(text, options);
-		canvas.svg(svg2)
-			}
-	
-	if (stroke1Visible) {
-		attributes = {fill: stroke1, stroke: stroke1, 'stroke-width': '6', id: 'stroke1'};
-		options = {x: 30, y: 30, fontSize: size, anchor: 'top', attributes: attributes};
-		svg1 = textToSVG.getPath(text, options);
-		canvas.svg(svg1)
-	}
-	
-	if (fillVisible) {
-		attributes = {fill: fill, id: 'fill'};
-		options = {x: 30, y: 30, fontSize: size, anchor: 'top', attributes: attributes};
-		svg = textToSVG.getPath(text, options);
-		canvas.svg(svg)
-	}
-
-	s2path = document.getElementById('stroke2');
-	base_d = s2path.getAttribute('d');
-	p = new Path(base_d);
-	p.warp({
-		type: 'WARP_ARCH',
-		bend : 15
-	});
-	s2path.setAttribute('d', p.output());
-
-	s1path = document.getElementById('stroke1');
-	base_d = s1path.getAttribute('d');
-	p = new Path(base_d);
-	p.warp({
-		type: 'WARP_ARCH',
-		bend : 15
-	});
-	s2path.setAttribute('d', p.output());
-
-	fillPath = document.getElementById('fill');
-	base_d = fillPath.getAttribute('d');
-	p = new Path(base_d);
-	p.warp({
-		type: 'WARP_ARCH',
-		bend : 15
-	});
-	fillPath.setAttribute('d', p.output());
-
-	console.log(canvas.svg())
-
-	
-
-	/* var font_format = 'woff2'; // best compression
-	var font_mimetype = 'font/' + font_format;
-	var buff = fs.readFileSync(__dirname+'\\fonts\\'+font);
-	var font_data = 'data:'+font_mimetype+';charset=ascii;base64,' + buff.toString('base64')
-
-	registerWindow(window, document)
-
-	const canvas = SVG(document.documentElement).size(512, 512)
-
-	canvas.clear()
-
-	canvas.defs().element('style').words(
-		"@font-face {" +
-		"  font-family: '"+req.body.font+"';" +
-		"  src: url('"+font_data+"')" +
-		"    format('"+font_format+"')" +
-		"  ;" +
-		"}"
-	)
-
-	var group = canvas.group();
-
-	if (stroke2Visible) {
-		var chars = group.text(text).font({
-			size: size*1.25,
-			fill: stroke2,
-			family: req.body.font
-		})
-		chars.x(20)
-		chars.y(20)
-		chars.stroke({ color: stroke2, width: 10 })
-	}
-
-	if (stroke1Visible) {
-		var chars = group.text(text).font({
-			size: size*1.25,
-			fill: stroke1,
-			family: req.body.font
-		})
-		chars.x(20)
-		chars.y(20)
-		chars.stroke({ color: stroke1, width: 6 })
-	}
-
-	if (fillVisible) {
-		var chars = group.text(text).font({
-			size: size*1.25,
-			fill: fill,
-			family: req.body.font
-		})
-		chars.x(20)
-		chars.y(20)
-	}
-
-
-
-	canvas.height(group.bbox().height+20);
-	canvas.width(group.bbox().width+20)
-	
-	console.log(canvas.svg())
-	var buff2 = Buffer.from(canvas.svg());
-	res.end('data:image/svg+xml;base64,'+buff2.toString('base64')) */
 })
 
 app2.post('/jitterText', (req, res) => {
@@ -622,8 +527,9 @@ const createWindow = () => {
       height: 760,
 	  icon: (__dirname + '/images/sweater.png'),
       webPreferences: {
-        //preload: path.join(__dirname, 'preload.js')
-      }
+		nodeIntegration: true,
+		contextIsolation: false
+	  }
     })
   
     // and load the index.html of the app.
