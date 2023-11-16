@@ -764,7 +764,8 @@
 	var imLeft = 256;
 	var imTop = 350;
 	var wmLeft = 256;
-	var wmTop= 341;
+	//var wmTop= 341;
+	var wmTop = 353;
 	
 	var can = document.getElementById('below');
 	var ctx = can.getContext('2d');
@@ -3681,11 +3682,8 @@
 				return;
 			}
 
-			console.log("got this far")
-			const path = font.getPath("Bulldogs",wmLeft,wmTop,70)
+			const path = font.getPath("BULLDOGS",wmLeft,wmTop,60)
 			const svgPath = path.toPathData(5)
-
-			console.log(svgPath)
 
 			wordmarkText = new fabric.Path(svgPath, {
 				left: 256,
@@ -3698,8 +3696,8 @@
 				stroke: initialColors["wordmarkTextColor"],
 				strokeWidth: 0,
 				scaleX: 0.5,
-				scaleY: 0.5
-
+				scaleY: 0.5,
+				hasBorders: false
 			})
 		
 			wordmarkTextStroke1 = new fabric.Path(svgPath, {
@@ -3714,7 +3712,8 @@
 				id: 'wordmarkTextStroke1',
 				fill: initialColors["wordmarkTextStroke1Color"],
 				scaleX: 0.5,
-				scaleY: 0.5
+				scaleY: 0.5,
+				hasBorders: false
 			})
 		
 			wordmarkTextStroke2 = new fabric.Path(svgPath, {
@@ -3729,7 +3728,8 @@
 				id: 'wordmarkTextStroke2',
 				fill: initialColors["wordmarkTextStroke2Color"],
 				scaleX: 0.5,
-				scaleY: 0.5
+				scaleY: 0.5,
+				hasBorders: false
 			})
 			
 			wordmark = new fabric.Group([],{
@@ -3748,18 +3748,6 @@
 				top:wmTop
 			
 			});
-			/* wordmark = new fabric.Group ([],{
-				visible: false,
-				id:'wordmark',
-				borderColor: 'red',
-				cornerColor: 'yellow',
-				cornerSize: 12,
-				transparentCorners: false,
-				originX: 'center',
-				originY: 'center',
-				visible: false,
-				description: 'Wordmark'
-			}) */
 
 			wordmark.addWithUpdate(wordmarkTextStroke2)
 			wordmark.addWithUpdate(wordmarkTextStroke1)
