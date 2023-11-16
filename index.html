@@ -3758,10 +3758,6 @@
 
 		//logoCanvas.add(wordmark);
 		logoCanvas.add(laceGroup);
-
-		logoCanvas.getObjects('group').forEach(function(g) {
-			console.log(g)
-		})
 		
 		below.add(jerseyColor);
 		below.add(classicBody1a);
@@ -3885,7 +3881,7 @@
 		below.add(undershirtColor);
 
 		fabric.loadSVGFromURL('./images/fhm_camoBase.svg',function(svg,options) {
-			camoBase = new fabric.PathGroup(svg,options);
+			camoBase = new fabric.Group(svg,options);
 			camoBase.setOptions ({
 				originX: 'center',
 				originY: 'center',
@@ -3898,7 +3894,7 @@
 			below.add(camoBase);
 			below.moveTo(camoBase, 1);
 			fabric.loadSVGFromURL('./images/fhm_camoLayer1.svg',function(svg,options) {
-				camoLayer1 = new fabric.PathGroup(svg,options);
+				camoLayer1 = new fabric.Group(svg,options);
 				camoLayer1.setOptions ({
 					originX: 'center',
 					originY: 'center',
@@ -3911,7 +3907,7 @@
 				below.add(camoLayer1);
 				below.moveTo(camoLayer1, 2);
 				fabric.loadSVGFromURL('./images/fhm_camoLayer2.svg',function(svg,options) {
-					camoLayer2 = new fabric.PathGroup(svg,options);
+					camoLayer2 = new fabric.Group(svg,options);
 					camoLayer2.setOptions ({
 						originX: 'center',
 						originY: 'center',
@@ -3924,7 +3920,7 @@
 					below.add(camoLayer2);
 					below.moveTo(camoLayer2, 3);
 					fabric.loadSVGFromURL('./images/fhm_digiCamoBase.svg',function(svg,options) {
-						digiCamoBase = new fabric.PathGroup(svg,options);
+						digiCamoBase = new fabric.Group(svg,options);
 						digiCamoBase.setOptions ({
 							originX: 'center',
 							originY: 'center',
@@ -3937,7 +3933,7 @@
 						below.add(digiCamoBase);
 						below.moveTo(digiCamoBase, 4);
 						fabric.loadSVGFromURL('./images/fhm_digiCamoLayer1.svg',function(svg,options) {
-							digiCamoLayer1 = new fabric.PathGroup(svg,options);
+							digiCamoLayer1 = new fabric.Group(svg,options);
 							digiCamoLayer1.setOptions ({
 								originX: 'center',
 								originY: 'center',
@@ -3950,7 +3946,7 @@
 							below.add(digiCamoLayer1);
 							below.moveTo(digiCamoLayer1, 5);
 							fabric.loadSVGFromURL('./images/fhm_digiCamoLayer2.svg',function(svg,options) {
-								digiCamoLayer2 = new fabric.PathGroup(svg,options);
+								digiCamoLayer2 = new fabric.Group(svg,options);
 								digiCamoLayer2.setOptions ({
 									originX: 'center',
 									originY: 'center',
@@ -4408,7 +4404,7 @@
 		logoCanvas.discardActiveObject();
 		logoCanvas.remove(makersMark);
 		fabric.loadSVGFromURL('./images/'+$("#makersMarkSelect").val(),function(svg,options) {
-			makersMark = new fabric.PathGroup(svg,options);
+			makersMark = new fabric.Group(svg,options);
 			makersMark.setOptions ({
 				originX: 'center',
 				originY: 'center',
