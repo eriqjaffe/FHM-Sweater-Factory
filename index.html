@@ -17,6 +17,7 @@
 	<script type="text/javascript" src="./scripts/spin.min.js"></script>
 	<script type="text/javascript" src="./scripts/jquery.html5storage.min.js"></script>
 	<script type="text/javascript" src="./scripts/fontfaceobserver.js"></script>
+	<script type="text/javascript" src="./scripts/opentype.js"></script>
 	<!--<script type="text/javascript" src="./scripts/jszip.min.js"></script>-->
 	<link href='./scripts/sweaterfactory.css' rel='stylesheet' type='text/css'>
 	<link href='./scripts/spectrum.css' rel='stylesheet' type='text/css'>
@@ -3604,7 +3605,7 @@
 			selectable:false
 		});
 		
-		wordmarkText = new fabric.Text('BULLDOGS',{
+		/* wordmarkText = new fabric.Text('BULLDOGS',{
 			fontFamily: "pro_full_blockregular",
 			fontSize: 30,
 			originX: 'center',
@@ -3640,9 +3641,11 @@
 			strokeLineCap: "round",
 			id: 'wordmarkTextStroke2',
 			fill: initialColors["wordmarkTextStroke2Color"]
-		})
+		}) */
 
-		wordmark= new fabric.Group([wordmarkTextStroke2,wordmarkTextStroke1,wordmarkText],{originX:'center',originY:'center',visible:false,id:'wordmark',borderColor:'red',cornerColor:'yellow',cornerSize:12,transparentCorners:false,lockScalingFlip:true,lockScalingX:true,lockScalingY:true,left:wmLeft,top:wmTop});
+		
+
+		//wordmark = new fabric.Group([wordmarkTextStroke2,wordmarkTextStroke1,wordmarkText],{originX:'center',originY:'center',visible:false,id:'wordmark',borderColor:'red',cornerColor:'yellow',cornerSize:12,transparentCorners:false,lockScalingFlip:true,lockScalingX:true,lockScalingY:true,left:wmLeft,top:wmTop});
 
 		laceGroup = new fabric.Group([laceHoles1,laceHoles2,tiedLaces1,tiedLaces2,untiedLaces1],{selectable:false,evented:false,id:'laceGroup'});
 
@@ -3671,8 +3674,106 @@
 		logoCanvas.add(modernCollar4b);
 		logoCanvas.add(modernCollar4d);
 		logoCanvas.add(modernCollar4c);
-		logoCanvas.add(wordmark);
+
+		opentype.load("./fonts/pro_full_block-webfont.ttf", (err,font) => {
+			if (err || !font) {
+				console.log(err)
+				return;
+			}
+
+			console.log("got this far")
+			const path = font.getPath("Bulldogs",wmLeft,wmTop,70)
+			const svgPath = path.toPathData(5)
+
+			console.log(svgPath)
+
+			wordmarkText = new fabric.Path(svgPath, {
+				left: 256,
+				originX: 'center',
+				originY: 'center',
+				centeredScaling: true,
+				centeredRotation: true,
+				id: 'wordmarkText',
+				fill: initialColors["wordmarkTextColor"],
+				stroke: initialColors["wordmarkTextColor"],
+				strokeWidth: 0,
+				scaleX: 0.5,
+				scaleY: 0.5
+
+			})
+		
+			wordmarkTextStroke1 = new fabric.Path(svgPath, {
+				left: 256,
+				originX: 'center',
+				originY: 'center',
+				centeredScaling: true,
+				centeredRotation: true,
+				stroke: initialColors["wordmarkTextStroke1Color"],
+				strokeWidth: 6,
+				strokeLineCap: "round",
+				id: 'wordmarkTextStroke1',
+				fill: initialColors["wordmarkTextStroke1Color"],
+				scaleX: 0.5,
+				scaleY: 0.5
+			})
+		
+			wordmarkTextStroke2 = new fabric.Path(svgPath, {
+				left: 256,
+				originX: 'center',
+				originY: 'center',
+				centeredScaling: true,
+				centeredRotation: true,
+				stroke: initialColors["wordmarkTextStroke2Color"],
+				strokeWidth: 10,
+				strokeLineCap: "round",
+				id: 'wordmarkTextStroke2',
+				fill: initialColors["wordmarkTextStroke2Color"],
+				scaleX: 0.5,
+				scaleY: 0.5
+			})
+			
+			wordmark = new fabric.Group([],{
+				originX:'center',
+				originY:'center',
+				visible:true,
+				id:'wordmark',
+				borderColor:'red',
+				cornerColor:'yellow',
+				cornerSize:12,
+				transparentCorners:false,
+				lockScalingFlip:true,
+				lockScalingX:true,
+				lockScalingY:true,
+				left:wmLeft,
+				top:wmTop
+			
+			});
+			/* wordmark = new fabric.Group ([],{
+				visible: false,
+				id:'wordmark',
+				borderColor: 'red',
+				cornerColor: 'yellow',
+				cornerSize: 12,
+				transparentCorners: false,
+				originX: 'center',
+				originY: 'center',
+				visible: false,
+				description: 'Wordmark'
+			}) */
+
+			wordmark.addWithUpdate(wordmarkTextStroke2)
+			wordmark.addWithUpdate(wordmarkTextStroke1)
+			wordmark.addWithUpdate(wordmarkText)
+
+			logoCanvas.add(wordmark)
+		})
+
+		//logoCanvas.add(wordmark);
 		logoCanvas.add(laceGroup);
+
+		logoCanvas.getObjects('group').forEach(function(g) {
+			console.log(g)
+		})
 		
 		below.add(jerseyColor);
 		below.add(classicBody1a);

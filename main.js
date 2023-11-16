@@ -174,7 +174,6 @@ const server = app2.listen(0, () => {
 app2.use(express.urlencoded({limit: '50mb', extended: true, parameterLimit: 50000}));
 
 ipcMain.on('upload-image', (event, arg) => {
-	console.log("yeah got this far")
 	let json = {}
 	dialog.showOpenDialog(null, {
 		properties: ['openFile'],
@@ -539,6 +538,10 @@ const createWindow = () => {
 		e.preventDefault();
 		require('electron').shell.openExternal(url);
 	});
+
+	// Open the DevTools.
+    mainWindow.maximize()
+    mainWindow.webContents.openDevTools()
   
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
