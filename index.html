@@ -984,14 +984,13 @@
 	});
 
 	$("#jerseyColor").spectrum({
+		type: "color",
+		showAlpha: false,
 		showInput: true,
 		preferredFormat: prefColorFormat,
 		showInitial: true,
 		showPalette: true,
 		showButtons: true,
-		showSelectionPalette: true,
-		localStorageKey: "spectrum.sweaterfactory",
-		palette: [ ],
 		color: initialColors["jerseyColor"],
 		show: function(color) {
 			original_color = color;
@@ -999,40 +998,24 @@
 		},
 		move: function(color) {
 			$(this).data('changed', true);
-			below.item(0).fill = color.toHexString();
+			below.item(0).set("fill",color.toHexString())
 			reRenderBG();
-			logoCanvas.backgroundImage
-			//var overlayImage = logoCanvas.item(0);
-			//overlayImage.filters[0]['color'] = color.toHexString();
-			//overlayImage.applyFilters(logoCanvas.renderAll.bind(logoCanvas))
 		},
 		change: function(color) {
 			$(this).data('changed', true);
-			below.item(0).fill = color.toHexString();
+			below.item(0).set("fill",color.toHexString())
 			reRenderBG();
-			//var overlayImage = logoCanvas.item(0);
-			//overlayImage.filters[0]['color'] = color.toHexString();
-			//overlayImage.applyFilters(logoCanvas.renderAll.bind(logoCanvas))
 		},
 		hide: function(color) {
-			if ($(this).data('changed')) {
-				below.item(0).fill = color.toHexString();
-				reRenderBG();
-				//var overlayImage = logoCanvas.item(0);
-				//overlayImage.filters[0]['color'] = color.toHexString();
-				//overlayImage.applyFilters(logoCanvas.renderAll.bind(logoCanvas))
-			} else {
-				below.item(0).fill = original_color.toHexString();
-				//below.backgroundColor=original_color;
-				reRenderBG();
-				//var overlayImage = logoCanvas.item(0);
-				//overlayImage.filters[0]['color'] = original_color;
-				//overlayImage.applyFilters(logoCanvas.renderAll.bind(logoCanvas))
-			}
+			$(this).data('changed', true);
+			below.item(0).set("fill",color.toHexString())
+			reRenderBG();
 		}
 	})
 
 	$("#undershirtColor").spectrum({
+		type: "color",
+		showAlpha: false,
 		showInput: true,
 		preferredFormat: prefColorFormat,
 		showInitial: true,
@@ -1052,13 +1035,13 @@
 			var objects = below.getObjects('path');
 			for (x in objects) {
 				if (objects[x].id == 'undershirtColor') {
-					objects[x].fill = color.toHexString();
+					objects[x].set("fill",color.toHexString())
 				}
 			}
 			var objects = logoCanvas.getObjects('path');
 			for (x in objects) {
 				if (objects[x].id.indexOf("Undershirt") > -1) {
-					objects[x].fill = color.toHexString();
+					objects[x].set("fill",color.toHexString())
 				}
 			}
 			reRenderBG();
@@ -1069,13 +1052,13 @@
 			var objects = below.getObjects('path');
 			for (x in objects) {
 				if (objects[x].id == 'undershirtColor') {
-					objects[x].fill = color.toHexString();
+					objects[x].set("fill",color.toHexString())
 				}
 			}
 			var objects = logoCanvas.getObjects('path');
 			for (x in objects) {
 				if (objects[x].id.indexOf("Undershirt") > -1) {
-					objects[x].fill = color.toHexString();
+					objects[x].set("fill",color.toHexString())
 				}
 			}
 			reRenderBG();
@@ -1085,13 +1068,13 @@
 			var objects = below.getObjects('path');
 			for (x in objects) {
 				if (objects[x].id == 'undershirtColor') {
-					objects[x].fill = color.toHexString();
+					objects[x].set("fill",color.toHexString())
 				}
 			}
 			var objects = logoCanvas.getObjects('path');
 			for (x in objects) {
 				if (objects[x].id.indexOf("Undershirt") > -1) {
-					objects[x].fill = color.toHexString();
+					objects[x].set("fill",color.toHexString())
 				}
 			}
 			reRenderBG();
@@ -1106,6 +1089,8 @@
 			color = null;
 		}
 		$(this).spectrum({
+			type: "color",
+			showAlpha: false,
 			showInput: true,
 			preferredFormat: prefColorFormat,
 			showInitial: true,
@@ -1128,19 +1113,20 @@
 				}
 				$(this).data('changed', true);
 				var id = $(this).data('element');
+				console.log(id)
 				var objects = below.getObjects();
 				for (x in objects) {
 					if (objects[x].get('type') == "group") {
 						var groupObjects = objects[x].getObjects();
 						for(y in groupObjects){
 							if (groupObjects[y].id == id) {
-								groupObjects[y].fill = colorX;
+								groupObjects[y].set("fill",colorX);
 								groupObjects[y].stroke = colorX;
 							}
 						}
 					} else {
 						if (objects[x].id == id) {
-							objects[x].fill = colorX;
+							objects[x].set("fill",colorX);
 						} 						
 					} 
 				}
@@ -1150,13 +1136,13 @@
 						var groupObjects = objects[x].getObjects();
 						for(y in groupObjects){
 							if (groupObjects[y].id == id) {
-								groupObjects[y].fill = colorX;
+								groupObjects[y].set("fill",colorX);
 								groupObjects[y].stroke = colorX;
 							}
 						}
 					} else {
 						if (objects[x].id == id) {
-							objects[x].fill = colorX;;
+							objects[x].set("fill",colorX);;
 						} 						
 					}
 				}
@@ -1166,7 +1152,7 @@
 						var groupObjects = objects[x].getObjects();
 						for(y in groupObjects){
 							if (groupObjects[y].id == id) {
-								groupObjects[y].fill = colorX;
+								groupObjects[y].set("fill",colorX);
 								groupObjects[y].stroke = colorX;
 							}
 						}
@@ -1191,13 +1177,13 @@
 						var groupObjects = objects[x].getObjects();
 						for(y in groupObjects){
 							if (groupObjects[y].id == id) {
-								groupObjects[y].fill = colorX;
+								groupObjects[y].set("fill",colorX);
 								groupObjects[y].stroke = colorX;
 							}
 						}
 					} else {
 						if (objects[x].id == id) {
-							objects[x].fill = colorX;
+							objects[x].set("fill",colorX);
 						} 						
 					} 
 				}
@@ -1207,13 +1193,13 @@
 						var groupObjects = objects[x].getObjects();
 						for(y in groupObjects){
 							if (groupObjects[y].id == id) {
-								groupObjects[y].fill = colorX;
+								groupObjects[y].set("fill",colorX);
 								groupObjects[y].stroke = colorX;
 							}
 						}
 					} else {
 						if (objects[x].id == id) {
-							objects[x].fill = colorX;;
+							objects[x].set("fill",colorX);;
 						} 						
 					}
 				}
@@ -1223,7 +1209,7 @@
 						var groupObjects = objects[x].getObjects();
 						for(y in groupObjects){
 							if (groupObjects[y].id == id) {
-								groupObjects[y].fill = colorX;
+								groupObjects[y].set("fill",colorX);
 								groupObjects[y].stroke = colorX;
 							}
 						}
@@ -1235,7 +1221,7 @@
 					var objects = below.getObjects();
 					for (x in objects) {
 						if (objects[x].id == link) {
-							objects[x].fill = colorX;
+							objects[x].set("fill",colorX);
 							objects[x].stroke = colorX;
 						}
 					}
@@ -1294,13 +1280,13 @@
 								var groupObjects = objects[x].getObjects();
 								for(y in groupObjects){
 									if (groupObjects[y].id == id) {
-										groupObjects[y].fill = colorX;
+										groupObjects[y].set("fill",colorX);
 										groupObjects[y].stroke = colorX;
 									}
 								}
 							} else {
 								if (objects[x].id == id) {
-									objects[x].fill = colorX;
+									objects[x].set("fill",colorX);
 								} 						
 							} 
 						}
@@ -1310,13 +1296,13 @@
 								var groupObjects = objects[x].getObjects();
 								for(y in groupObjects){
 									if (groupObjects[y].id == id) {
-										groupObjects[y].fill = colorX;
+										groupObjects[y].set("fill",colorX);
 										groupObjects[y].stroke = colorX;
 									}
 								}
 							} else {
 								if (objects[x].id == id) {
-									objects[x].fill = colorX;;
+									objects[x].set("fill",colorX);;
 								} 						
 							}
 						}
@@ -1326,7 +1312,7 @@
 								var groupObjects = objects[x].getObjects();
 								for(y in groupObjects){
 									if (groupObjects[y].id == id) {
-										groupObjects[y].fill = colorX;
+										groupObjects[y].set("fill",colorX);
 										groupObjects[y].stroke = colorX;
 									}
 								}
@@ -1378,13 +1364,13 @@
 								var groupObjects = objects[x].getObjects();
 								for(y in groupObjects){
 									if (groupObjects[y].id == id) {
-										groupObjects[y].fill = color.toHexString();
+										groupObjects[y].set("fill",color.toHexString())
 										groupObjects[y].stroke = color.toHexString();
 									}
 								}
 							} else {
 								if (objects[x].id == id) {
-									objects[x].fill = color.toHexString();
+									objects[x].set("fill",color.toHexString())
 								} 						
 							} 
 						}
@@ -1394,13 +1380,13 @@
 								var groupObjects = objects[x].getObjects();
 								for(y in groupObjects){
 									if (groupObjects[y].id == id) {
-										groupObjects[y].fill = color.toHexString();
+										groupObjects[y].set("fill",color.toHexString())
 										groupObjects[y].stroke = color.toHexString();
 									}
 								}
 							} else {
 								if (objects[x].id == id) {
-									objects[x].fill = color.toHexString();;
+									objects[x].set("fill",color.toHexString());
 								} 						
 							}
 						}
@@ -1410,7 +1396,7 @@
 								var groupObjects = objects[x].getObjects();
 								for(y in groupObjects){
 									if (groupObjects[y].id == id) {
-										groupObjects[y].fill = colorX;
+										groupObjects[y].set("fill",colorX);
 										groupObjects[y].stroke = colorX;
 									}
 								}
@@ -1468,6 +1454,8 @@
 			color = null;
 		}
 		$(this).spectrum({
+			type: "color",
+			showAlpha: false,
 			showInput: true,
 			preferredFormat: prefColorFormat,
 			showInitial: true,
@@ -1496,7 +1484,7 @@
 					var len = $(this).data("element").length
 					if ($(this).data("element").substring(0, len) == objects[x].id.substring(0, len)) {
 						if (objects[x].id.substr(objects[x].id.length - 1) == $(this).data("stripe")) {
-							objects[x].fill = colorX;
+							objects[x].set("fill",colorX);
 						}
 					}
 				}
@@ -1516,7 +1504,7 @@
 					var len = $(this).data("element").length
 					if ($(this).data("element").substring(0, len) == objects[x].id.substring(0, len)) {
 						if (objects[x].id.substr(objects[x].id.length - 1) == $(this).data("stripe")) {
-							objects[x].fill = colorX;
+							objects[x].set("fill",colorX);
 						}
 					}
 				}
@@ -1536,7 +1524,7 @@
 					var len = $(this).data("element").length
 					if ($(this).data("element").substring(0, len) == objects[x].id.substring(0, len)) {
 						if (objects[x].id.substr(objects[x].id.length - 1) == $(this).data("stripe")) {
-							objects[x].fill = colorX;
+							objects[x].set("fill",colorX);
 						}
 					}
 				}
@@ -1552,6 +1540,8 @@
 			color = null;
 		}
 		$(this).spectrum({
+			type: "color",
+			showAlpha: false,
 			showInput: true,
 			preferredFormat: prefColorFormat,
 			showInitial: true,
@@ -1577,7 +1567,7 @@
 				var objects = logoCanvas.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf("placard") > -1) {
-						objects[x].fill = colorX;
+						objects[x].set("fill",colorX);
 					} 						
 				}
 				logoCanvas.renderAll();
@@ -1594,7 +1584,7 @@
 				var objects = logoCanvas.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf("placard") > -1) {
-						objects[x].fill = colorX;
+						objects[x].set("fill",colorX);
 					} 						
 				}
 				logoCanvas.renderAll();
@@ -1610,7 +1600,7 @@
 				var objects = logoCanvas.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf("placard") > -1) {
-						objects[x].fill = colorX;
+						objects[x].set("fill",colorX);
 					} 						
 				}
 				logoCanvas.renderAll();
@@ -1625,6 +1615,8 @@
 			color = null;
 		}
 		$(this).spectrum({
+			type: "color",
+			showAlpha: false,
 			showInput: true,
 			preferredFormat: prefColorFormat,
 			showInitial: true,
@@ -1654,7 +1646,7 @@
 						var groupObjects = objects[x].getObjects();
 						for(y in groupObjects){
 							if (groupObjects[y].id == id) {
-								groupObjects[y].fill = colorX;
+								groupObjects[y].set("fill",colorX);
 								groupObjects[y].stroke = colorX;
 							}
 						}
@@ -1677,7 +1669,7 @@
 						var groupObjects = objects[x].getObjects();
 						for(y in groupObjects){
 							if (groupObjects[y].id == id) {
-								groupObjects[y].fill = colorX;
+								groupObjects[y].set("fill",colorX);
 								groupObjects[y].stroke = colorX;
 							}
 						}
@@ -1722,6 +1714,8 @@
 			color = null;
 		}
 		$(this).spectrum({
+			type: "color",
+			showAlpha: false,
 			showInput: true,
 			preferredFormat: prefColorFormat,
 			showInitial: true,
@@ -1747,7 +1741,7 @@
 				var objects = laceGroup.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf("Laces") > -1) {
-						objects[x].fill = colorX;
+						objects[x].set("fill",colorX);
 					} 						
 				}
 				logoCanvas.renderAll();
@@ -1764,7 +1758,7 @@
 				var objects = laceGroup.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf("Laces") > -1) {
-						objects[x].fill = colorX;
+						objects[x].set("fill",colorX);
 					} 						
 				}
 				logoCanvas.renderAll();
@@ -1780,7 +1774,7 @@
 				var objects = laceGroup.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf("Laces") > -1) {
-						objects[x].fill = colorX;
+						objects[x].set("fill",colorX);
 					} 						
 				}
 				logoCanvas.renderAll();
@@ -1795,6 +1789,8 @@
 			color = null;
 		}
 		$(this).spectrum({
+			type: "color",
+			showAlpha: false,
 			showInput: true,
 			preferredFormat: prefColorFormat,
 			showInitial: true,
@@ -1820,7 +1816,7 @@
 				var objects = logoCanvas.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf($(this).data("element") > -1) && objects[x].id.substr(objects[x].id.length - 1) == $(this).data("stripe")) {
-						objects[x].fill = colorX;
+						objects[x].set("fill",colorX);
 					}
 				}
 				logoCanvas.renderAll();
@@ -1837,7 +1833,7 @@
 				var objects = logoCanvas.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf($(this).data("element") > -1) && objects[x].id.substr(objects[x].id.length - 1) == $(this).data("stripe")) {
-						objects[x].fill = colorX;
+						objects[x].set("fill",colorX);
 					}
 				}
 				logoCanvas.renderAll();
@@ -1854,7 +1850,7 @@
 				var objects = logoCanvas.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf($(this).data("element") > -1) && objects[x].id.substr(objects[x].id.length - 1) == $(this).data("stripe")) {
-						objects[x].fill = colorX;
+						objects[x].set("fill",colorX);
 					}
 				}
 				logoCanvas.renderAll();
@@ -1864,6 +1860,8 @@
 
 	$(".makerSelector").each(function() {
 		$(this).spectrum({
+			type: "color",
+			showAlpha: false,
 			showInput: true,
 			//preferredFormat: prefColorFormat,
 			showInitial: true,
@@ -1901,6 +1899,8 @@
 	
 	$(".camoSelector").each(function() {
 		$(this).spectrum({
+			type: "color",
+			showAlpha: false,
 			showInput: true,
 			//preferredFormat: prefColorFormat,
 			showInitial: true,
@@ -1959,6 +1959,8 @@
 
 	$(".stitchingSelector").each(function() {
 		$(this).spectrum({
+			type: "color",
+			showAlpha: false,
 			showInput: true,
 			preferredFormat: prefColorFormat,
 			showInitial: true,
@@ -1978,7 +1980,7 @@
 				var objects = below.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf("stitching") > -1) {
-						objects[x].fill = color.toHexString();
+						objects[x].set("fill",color.toHexString())
 					}
 				}
 				reRenderBG();
@@ -1988,7 +1990,7 @@
 				var objects = below.getObjects("path");
 				for (x in objects) {
 					if (objects[x].id.indexOf("stitching") > -1) {
-						objects[x].fill = color.toHexString();
+						objects[x].set("fill",color.toHexString())
 					}
 				}
 				reRenderBG()
@@ -2003,7 +2005,7 @@
 					var objects = below.getObjects("path");
 					for (x in objects) {
 						if (objects[x].id.indexOf("stitching") > -1) {
-							objects[x].fill = colorX;
+							objects[x].set("fill",colorX);
 						}
 					}
 				}
@@ -2013,6 +2015,8 @@
 	})
 
 	$(".colorSelector").spectrum({
+		type: "color",
+		showAlpha: false,
 		showInput: true,
 		preferredFormat: "rgb",
 		showInitial: true,
