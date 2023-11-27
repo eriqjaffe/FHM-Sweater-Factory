@@ -16,11 +16,32 @@ const tempDir = os.tmpdir()
 const url = require('url');
 const increment = require('add-filename-increment');
 const Store = require("electron-store")
+const fontname = require("fontname")
+const chokidar = require('chokidar')
 
 const app2 = express()
 const port = 8082;
 
 const store = new Store();
+
+const userFontsFolder = path.join(app.getPath('userData'),"fonts")
+
+if (!fs.existsSync(userFontsFolder)) {
+    fs.mkdirSync(userFontsFolder);
+}
+
+if (!fs.existsSync(userFontsFolder+"/README.txt")) {
+	var writeStream = fs.createWriteStream(userFontsFolder+"/README.txt");
+	writeStream.write("TTF and OTF fonts dropped into this folder will automatically be imported into the Sweater Factory!\r\n\r\nFonts removed from this folder will still be available in the Sweater Factory until you quit the app, and they will not reload after that.  Of course, that may cause sweaters that you load into the app to misbehave.")
+	writeStream.end()
+}
+
+const watcher = chokidar.watch(userFontsFolder, {
+	ignored: /(^|[\/\\])\../, // ignore dotfiles
+	persistent: true
+});
+
+watcher.on('ready', () => {})
 
 const fontArray = {
 	"Acme": "Acme-Regular.ttf",
@@ -199,6 +220,55 @@ ipcMain.on('upload-image', (event, arg) => {
 	  }).catch(err => {
 		console.log(err)
 	  })
+})
+
+ipcMain.on('local-font', (event, arg) => {
+	let json = {}
+	const options = {
+		defaultPath: store.get("uploadFontPath", app.getPath('desktop')),
+		properties: ['openFile'],
+		filters: [
+			{ name: 'Fonts', extensions: ['ttf', 'otf'] }
+		]
+	}
+	dialog.showOpenDialog(null, options).then(result => {
+		if(!result.canceled) {
+			store.set("uploadFontPath", path.dirname(result.filePaths[0]))
+			const filePath = path.join(userFontsFolder,path.basename(result.filePaths[0]))
+			try {
+				const fontMeta = fontname.parse(fs.readFileSync(result.filePaths[0]))[0];
+				var ext = getExtension(result.filePaths[0])
+				var fontPath = url.pathToFileURL(result.filePaths[0])
+				json.status = "ok"
+				json.fontName = fontMeta.fullName
+				json.fontStyle = fontMeta.fontSubfamily
+				json.familyName = fontMeta.fontFamily
+				json.fontFormat = ext
+				json.fontMimetype = 'font/' + ext
+				json.fontData = fontPath.href
+				json.fontPath = filePath
+				json.type = arg
+				fs.copyFileSync(result.filePaths[0], filePath)
+				event.sender.send('local-font-response', json)
+			} catch (err) {
+				json.status = "error"
+				json.fontName = path.basename(result.filePaths[0])
+				json.fontPath = result.filePaths[0]
+				json.message = err
+				event.sender.send('local-font-response', json)
+				fs.unlinkSync(result.filePaths[0])
+			}
+		} else {
+			json.status = "cancelled"
+			event.sender.send('local-font-response', json)
+			console.log("cancelled")
+		}
+	}).catch(err => {
+		console.log(err)
+		json.status = "error",
+		json.message = err
+		event.sender.send('local-font-response', json)
+	})
 })
 
 ipcMain.on('save-sweater', (event, arg) => {
@@ -530,6 +600,10 @@ const createWindow = () => {
 		contextIsolation: false
 	  }
     })
+
+	watcher.on('add', (path, stats) => {
+		mainWindow.webContents.send('updateFonts','click')
+	})
   
     // and load the index.html of the app.
     mainWindow.loadURL(`file://${__dirname}/index.html?port=${server.address().port}`);

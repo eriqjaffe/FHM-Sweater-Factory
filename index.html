@@ -98,7 +98,12 @@
 			'"Wendy One"': "WendyOne-Regular.ttf",
 			Yellowtail: "Yellowtail-Regular.ttf"
 		};
+
 		let undershirtObjects = []
+
+		let customFonts = [];
+
+		let fontList = ["Acme", "Athletic Gothic", "Athletic Gothic Shadow", "Fancy Block", "Berkshire Swash", "Cantora", "Caxton Roman", "Chela", "Circus", "Condiment", "Cookie", "Courgette", "Croissant", "Damion", "Engagement", "Fancy Block", "Germania", "Graduate", "Grand Hotel", "Jockey", "Kansas Tuscan", "Kaushan Script", "Leckerli", "Lily Script", "Lobster", "Lobster Two", "Metal Mania", "Miniver", "Molle", "New Rocker", "Norican", "Old English", "Oleo Script", "Oleo Script Swash Caps", "Pacifico", "Pirata", "Playball", "Pro Full Block", "Richardson Block", "Rubik", "Rum Raisin", "Satisfy", "Seymour", "SPL28 Script", "Tiffany Regular", "Trade Winds", "Tuscan", "Unifraktur Cook", "Unifraktur Maguntia", "Vibur", "Viga", "Wellfleet", "Wendy", "Yellowtail"]
 	</script>
     <!--[if IE]>
       <style type="text/css">
@@ -3660,48 +3665,6 @@
 			selectable:false
 		});
 		
-		/* wordmarkText = new fabric.Text('BULLDOGS',{
-			fontFamily: "pro_full_blockregular",
-			fontSize: 30,
-			originX: 'center',
-			originY: 'center',
-			textAlign: 'center',
-			id: 'wordmarkText',
-			fill: initialColors["wordmarkTextColor"],
-			stroke: initialColors["wordmarkTextColor"],
-			strokeWidth: 0,
-		})
-		
-		wordmarkTextStroke1 = new fabric.Text('BULLDOGS',{
-			fontFamily: "pro_full_blockregular",
-			fontSize: 30,
-			originX: 'center',
-			originY: 'center',
-			textAlign: 'center',
-			stroke: initialColors["wordmarkTextStroke1Color"],
-			strokeWidth: 4,
-			strokeLineCap: "round",
-			id: 'wordmarkTextStroke1',
-			fill: initialColors["wordmarkTextStroke1Color"]
-		})
-		
-		wordmarkTextStroke2 = new fabric.Text('BULLDOGS',{
-			fontFamily: "pro_full_blockregular",
-			fontSize: 30,
-			originX: 'center',
-			originY: 'center',
-			textAlign: 'center',
-			stroke: initialColors["wordmarkTextStroke2Color"],
-			strokeWidth: 6,
-			strokeLineCap: "round",
-			id: 'wordmarkTextStroke2',
-			fill: initialColors["wordmarkTextStroke2Color"]
-		}) */
-
-		
-
-		//wordmark = new fabric.Group([wordmarkTextStroke2,wordmarkTextStroke1,wordmarkText],{originX:'center',originY:'center',visible:false,id:'wordmark',borderColor:'red',cornerColor:'yellow',cornerSize:12,transparentCorners:false,lockScalingFlip:true,lockScalingX:true,lockScalingY:true,left:wmLeft,top:wmTop});
-
 		laceGroup = new fabric.Group([laceHoles1,laceHoles2,tiedLaces1,tiedLaces2,untiedLaces1],{selectable:false,evented:false,id:'laceGroup'});
 
 		loadMakersMark($("#makersMarkSelect").find(':selected').data('top'),$("#makersMarkSelect").find(':selected').data('left'),$("#makersMarkSelect").find(':selected').data('angle'),$("#makersMarkSelect").find(':selected').data('height'));
@@ -3801,12 +3764,9 @@
 			wordmark.addWithUpdate(wordmarkTextStroke1)
 			wordmark.addWithUpdate(wordmarkText)
 
-			console.log(wordmark._objects[0])
-
 			logoCanvas.add(wordmark)
 		})
 
-		//logoCanvas.add(wordmark);
 		logoCanvas.add(laceGroup);
 
 		laceGroup.bringToFront()
@@ -4665,8 +4625,6 @@
 	
 	$(".scaling").on("input",function(e) {
 		wordmarkChange($("#fontTypeCombo").val(),false)
-		//logoCanvas.renderAll();
-		//initializeWarp();
 	})	
 	
 	function diagonalText() {
@@ -4796,64 +4754,6 @@
 			}
 		})
 	}
-		/* $("#overlay").css("display","inline-block");
-		var objects = logoCanvas.getObjects();
-		for (x in objects) {
-			if (objects[x].get('name') == "warpedText") {
-				logoCanvas.remove(objects[x]);
-			}
-		}
-		$.ajax({
-			type: "POST",
-			url: "http://127.0.0.1:"+port+"/jitterText",
-			data: {text:wordmarkText.text, font:fontSources[wordmarkText.fontFamily], size:wordmarkText.fontSize, fill:wordmarkText.fill, fillVisible:wordmarkText.visible, stroke1Visible:wordmarkTextStroke1.visible, stroke1Color:wordmarkTextStroke1.stroke, stroke2Visible:wordmarkTextStroke2.visible, stroke2Color:wordmarkTextStroke2.stroke,hSpacing:$("#hSpacing").val(),vSpacing:$("#vSpacing").val()},
-			success: function(data) {
-				console.log(data)
-				var imgObj = new Image();
-				imgObj.src = data;
-				imgObj.onload = function () {
-					var image = new fabric.Image(imgObj);
-					image.set({
-						originX: 'center',
-						originY: 'center',
-						left: wmLeft,
-						top: wmTop,
-						perPixelTargetFind: true,
-						centeredScaling: true,
-						centeredRotation: true,
-						borderColor: 'red',
-						cornerColor: 'yellow',
-						cornerSize: 12,
-						name: 'warpedText',
-						transparentCorners: false,
-						scaleX: 0.5,
-						scaleY: 0.5
-					});
-					
-					image.filters.push(new fabric.Image.filters.Resize({
-						resizeType: 'lanczos', // typo fixed
-						lanczosLobes: 2 // typo fixed
-					}));
-					
-					image.on('object:modified',function() {
-						wmLeft = image.getBoundingRect()['left'];
-						wmTop = image.getBoundingRect()['top'];
-					});
-					
-					var objects = logoCanvas.getObjects();
-					for (x in objects) {
-						if (objects[x].id == "wordmark") {
-							objects[x].set("visible",false)
-						}
-					}
-
-					logoCanvas.add(image);
-					logoCanvas.renderAll();
-					$("#overlay").css("display","none");
-				}
-			}
-		})
-	} */
 	
 	function warpText() {
 		var warp = true;
@@ -5037,7 +4937,6 @@
 				grp.removeWithUpdate(o)
 			})
 
-			console.log($("#wordmarkSpacing").val()/100)
 			const path = font.getPath($("#wordmarkTextBox").val(),wmLeft,wmTop,parseInt($("#fontSize").val()),{letterSpacing:$("#wordmarkSpacing").val()/100})
 			const svgPath = path.toPathData(5)
 
@@ -5146,10 +5045,49 @@
 
 	$("#fakeFontButton").on("click", function(e) {
 		e.preventDefault;
-		$("#uploadTheFont").click();
+		ipcRenderer.send('local-font', null)
+		//$("#uploadTheFont").click();
 	})
 
-	$("#uploadTheFont").on("click", function(e) {
+	ipcRenderer.on('local-font-response', (event, response) => {
+		addFont(response)
+	})
+
+	function addFont(data) {
+        if (data.result == "error") {
+            alert("An error occurred:\r\n\r\n"+data.message)
+            return false;
+        } else if (data.status == "error") {
+            alert("The font '"+data.fontName+"' could not be loaded.")
+            return false;
+        } else {
+            if (fontList.includes(data.fontName)) {
+                // switch to the already known font
+                const fontDropdown= document.getElementById("fontTypeCombo").msDropdown;
+                var foo = findIndexByText(fontDropdown, data.fontName)
+                fontDropdown.selectedIndex = foo
+                fontDropdown.refresh()
+            } else {
+				fontList.push(data.fontName)
+				let tmpTxt = new fabric.IText("ABC 123",{
+					fontFamily: data.familyName,
+					fontSize: 96,
+					originX: 'center',
+					originY: 'center',
+					textAlign: 'center',
+					fill: 'black',
+					stroke: 'black',
+					originX: 'center',
+					originY: 'center',
+				})
+				refreshDropdown(data,tmpTxt)
+				wordmarkChange(data,false)
+            }
+        }
+    }
+	
+
+	/* $("#uploadTheFont").on("click", function(e) {
 		//$("#fontTypeCombo").removeClass().addClass('alegreya');
 		$.ajax({
 			type: "GET",
@@ -5199,7 +5137,7 @@
 				//$(this).removeClass().addClass(style);
 			}
 		})
-	})
+	}) */
 	
 	fabric.Canvas.prototype.getItemByID = function(name) {
 		var object = null,
@@ -5221,6 +5159,53 @@
             return false;
         
         return true;
+    }
+
+	function findIndexByText(dropdown, text) {
+		for (child of dropdown.children) {
+			if (child.text == text) {
+				return child.index
+			}
+		}
+		return -1
+	}
+
+	function findIndexByValue(dropdown, value) {
+		for (child of dropdown.children) {
+			if (child.value == value) {
+				return child.index
+			}
+		}
+		return -1
+	}
+
+	function refreshDropdown(data,thumb) {
+		data.thumb = thumb.toDataURL()
+		customFonts.push(data)
+
+		const fontDropdown= document.getElementById("fontTypeCombo").msDropdown;
+    
+		const displayName = (data.fontStyle == "Regular") ? data.fontName : data.fontName +" "+data.fontStyle
+
+		const idx = findIndexByText(fontDropdown, displayName)
+
+		if (idx == -1) {
+			fontDropdown.add({text:displayName, value:data.fontPath, image:data.thumb},0)
+			fontDropdown.selectedIndex = 0;
+		} else {
+            fontDropdown.selectedIndex = idx;
+		}
+
+		sortFontDropdown()
+	}
+
+    function sortFontDropdown() {
+        const selectedFont = $("#fontTypeCombo").val()
+
+		$("#fontTypeCombo").html($('#fontTypeCombo option').sort(function(x, y) {
+         	return $(x).text().toLowerCase() < $(y).text().toLowerCase() ? -1 : 1;
+		}))
+		$("#fontTypeCombo").val(selectedFont)
     }
 </script>
 </html>
