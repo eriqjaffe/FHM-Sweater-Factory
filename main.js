@@ -6,10 +6,6 @@ const Jimp = require('jimp');
 const imagemagickCli = require('imagemagick-cli');
 const { createSVGWindow } = require('svgdom')
 const window = createSVGWindow()
-const document = window.document
-const { SVG, registerWindow } = require('@svgdotjs/svg.js')
-const TextToSVG = require('text-to-svg');
-const ttfInfo = require('ttfinfo');
 const isMac = process.platform === 'darwin'
 const os = require('os');
 const tempDir = os.tmpdir()
@@ -19,9 +15,6 @@ const Store = require("electron-store")
 const fontname = require("fontname")
 const chokidar = require('chokidar')
 const font2base64 = require("node-font2base64")
-
-const app2 = express()
-const port = 8082;
 
 const store = new Store();
 
@@ -188,12 +181,6 @@ const template = [
 
 const menu = Menu.buildFromTemplate(template)
 Menu.setApplicationMenu(menu)
-
-const server = app2.listen(0, () => {
-	console.log(`Server running on port ${server.address().port}`);
-});
-
-app2.use(express.urlencoded({limit: '50mb', extended: true, parameterLimit: 50000}));
 
 ipcMain.on('upload-image', (event, arg) => {
 	let json = {}
@@ -553,7 +540,7 @@ const createWindow = () => {
 	})
   
     // and load the index.html of the app.
-    mainWindow.loadURL(`file://${__dirname}/index.html?port=${server.address().port}`);
+    mainWindow.loadURL(`file://${__dirname}/index.html`);
 
 	mainWindow.webContents.on('new-window', function(e, url) {
 		e.preventDefault();
