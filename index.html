@@ -6,6 +6,7 @@
 	<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 	<link rel="icon" type="image/png" href="./images/sf_favicon.png">
 	<script type="text/javascript" src="./scripts/jquery-1.11.3.min.js"></script>
+	<script type="text/javascript" src="./scripts/dd.min.js"></script>
 	<script type="text/javascript" src="./scripts/spectrum.js"></script>
 	<script type="text/javascript" src="./scripts/fabric.min.js"></script>
 	<script type="text/javascript" src="./scripts/context_blender.js"></script>
@@ -97,6 +98,7 @@
 			'"Wendy One"': "WendyOne-Regular.ttf",
 			Yellowtail: "Yellowtail-Regular.ttf"
 		};
+		let undershirtObjects = []
 	</script>
     <!--[if IE]>
       <style type="text/css">
@@ -145,6 +147,7 @@
 						</a>
 					</div>
 				</div>
+				<!--<canvas id="textWarp" width="1024" height="1024" style="border:1px solid blue;"></canvas>-->
 			</div>
 			<div class="col span_1_of_2" style="float:right; max-height:500px;">
 			<div id="text">
@@ -325,7 +328,7 @@
 						<div class="accord-content">
 							<table style="width:100%;">
 								<tr class="color_tr">
-									<td class="checkCell"><input type="checkbox" class="multiToggle" data-canvas="logoCanvas" data-id="" checked></td>
+									<td class="checkCell">&nbsp;</td>
 									<td>
 										<label>Collar:</label>&nbsp;
 										<select id="modernCollar">
@@ -488,16 +491,17 @@
 							</table>
 							<table style="width:100%;">
 								<tr>
-									<td style="text-align:center;"><input type="checkbox" id="wordmarkTextColorCheck" class="textOption textToggle" data-id="wordmarkText" checked><input class="textColorSelector" type="text" id="wordmarkTextColor" data-element="wordmarkText"></td>
-									<td style="text-align:center;"><input type="checkbox" id="wordmarkTextStroke1ColorCheck" class="textOption textToggle" data-id="wordmarkTextStroke1" checked><input class="textColorSelector" type="text" id="wordmarkTextStroke1Color" data-element="wordmarkTextStroke1"></td>
-									<td style="text-align:center;"><input type="checkbox" id="wordmarkTextStroke2ColorCheck" class="textOption textToggle" data-id="wordmarkTextStroke2" checked><input class="textColorSelector" type="text" id="wordmarkTextStroke2Color" data-element="wordmarkTextStroke2"></td>
-									<td style="text-align:center;">Font Size: <input type="number" id="fontSize" value="30" class="textOption scaling" style="width:50px;"></td>
+									<td style="text-align:center;"><input type="checkbox" id="wordmarkTextColorCheck" class="textOption textToggle" data-id="wordmarkText" checked>&nbsp;<input class="textColorSelector" type="text" id="wordmarkTextColor" data-element="wordmarkText"></td>
+									<td style="text-align:center;"><input type="checkbox" id="wordmarkTextStroke1ColorCheck" class="textOption textToggle" data-id="wordmarkTextStroke1" checked>&nbsp;<input class="textColorSelector" type="text" id="wordmarkTextStroke1Color" data-element="wordmarkTextStroke1"></td>
+									<td style="text-align:center;"><input type="checkbox" id="wordmarkTextStroke2ColorCheck" class="textOption textToggle" data-id="wordmarkTextStroke2" checked>&nbsp;<input class="textColorSelector" type="text" id="wordmarkTextStroke2Color" data-element="wordmarkTextStroke2"></td>
+									<td style="text-align:center;">Size: <input type="number" id="fontSize" value="30" class="textOption scaling" style="width:50px;"></td>
+									<td style="text-align:center;">Spacing: <input type="number" id="wordmarkSpacing" value="0" class="textOption scaling" style="width:50px;"></td>
 								<tr>
 							</table>
-							<table style="width:100%;">
+							<table style="width:100%;" class="ms-jersey-container">
 								<tr>
 									<td style="width:20%;">
-										<select id="warpEffect" class="textOption msDropDown" style="width:100%;">
+										<select id="warpEffect" class="textOption" style="width:100%;" is="ms-dropdown" data-visible-rows="8">
 											<option value="none" data-image="./images/none.png"></option>
 											<option value="arch" data-value="15" data-image="./images/arched.png"></option>
 											<option value="arc" data-value="70" data-image="./images/arced.png"></option>
@@ -510,8 +514,7 @@
 											<option value="archUp" data-value="15" data-image="./images/archup.png"></option>
 											<option value="archDown" data-value="15" data-image="./images/archdown.png"></option>
 											<option value="diagonalText" data-value="15" data-image="./images/diag.png"></option>
-											<!-- <option value="pinch" data-value="10" data-image="./images/pinch.png"></option>
-											<option value="sandbox" data-value="15" data-image="./images/warpTBD.png"></option> -->
+											<!--<option value="sandbox" data-value="15" data-image="./images/warpTBD.png"></option>-->
 										</select>
 									</td>
 									<td style="width:80%;" colspan="2">
@@ -531,10 +534,66 @@
 								</tr>
 								<tr><td colspan="3" style="text-align:center; font-size:.8em;">Text effects may take a moment or two to process - be patient!</td></tr>
 							</table>	
-							<table style="width:100%;">
+							<table style="width:100%;" class="ms-jersey-container">
 								<tr>
 									<td colspan="3">
-										<select id="fontTypeCombo" class='textOption ProFullBlock' style="width:100%;">
+										<select id="fontTypeCombo" class='textOption msdd' style="width:100%;" disabled>
+											<option data-image="./images/Acme.png" value='./fonts/Acme-Regular.ttf'>Acme</option>
+											<option data-image="./images/Athletic Gothic.png" value='./fonts/athletic_gothic-webfont.ttf'>Athletic Gothic</option>
+											<option data-image="./images/Athletic Gothic Shadow.png" value='./fonts/athletic_gothic_shadow-webfont.ttf'>Athletic Gothic Shadow</option>
+											<option data-image="./images/Beaverton Script.png" value='./fonts/beaverton_script-webfont.ttf'>Fancy Block</option>
+											<option data-image="./images/Berkshire Swash.png" value='./fonts/BerkshireSwash-Regular.ttf'>Berkshire Swash</option>
+											<option data-image="./images/CantoraOne.png" value='./fonts/CantoraOne-Regular.ttf'>Cantora</option>
+											<option data-image="./images/Caxton Roman.png" value='./fonts/caxton_roman-webfont.ttf'>Caxton Roman</option>
+											<option data-image="./images/Chela One.png" value='./fonts/ChelaOne-Regular.ttf'>Chela</option>
+											<option data-image="./images/Russell Circus.png" value='./fonts/circus-webfont.ttf'>Circus</option>
+											<option data-image="./images/Condiment.png" value='./fonts/Condiment-Regular.ttf'>Condiment</option>
+											<option data-image="./images/Cookie.png" value='./fonts/Cookie-Regular.ttf'>Cookie</option>
+											<option data-image="./images/Courgette.png" value='./fonts/Courgette-Regular.ttf'>Courgette</option>
+											<option data-image="./images/Croissant One.png" value='./fonts/CroissantOne-Regular.ttf'>Croissant</option>
+											<option data-image="./images/Damion.png" value='./fonts/Damion-Regular.ttf'>Damion</option>
+											<option data-image="./images/Engagement.png" value='./fonts/Engagement-Regular.ttf'>Engagement</option>
+											<option data-image="./images/Rawlings Fancy Block.png" value='./fonts/rawlingsfancyblock-regular-webfont.ttf'>Fancy Block</option>
+											<option data-image="./images/Germania One.png" value='./fonts/GermaniaOne-Regular.ttf'>Germania</option>
+											<option data-image="./images/Graduate.png" value='./fonts/Graduate-Regular.ttf'>Graduate</option>
+											<option data-image="./images/Grand Hotel.png" value='./fonts/GrandHotel-Regular.ttf'>Grand Hotel</option>
+											<option data-image="./images/Jockey One.png" value='./fonts/JockeyOne-Regular.ttf'>Jockey</option>
+											<option data-image="./images/Kansas.png" value='./fonts/tuscan-webfont.ttf'>Kansas Tuscan</option>
+											<option data-image="./images/Kaushan Script.png" value='./fonts/KaushanScript-Regular.ttf'>Kaushan Script</option>
+											<option data-image="./images/Leckerli One.png" value='./fonts/LeckerliOne-Regular.ttf'>Leckerli</option>
+											<option data-image="./images/Lily Script One.png" value='./fonts/LilyScriptOne-Regular.ttf'>Lily Script</option>
+											<option data-image="./images/Lobster.png" value='./fonts/Lobster-Regular.ttf'>Lobster</option>
+											<option data-image="./images/Lobster Two.png" value='./fonts/LobsterTwo-Regular.ttf'>Lobster Two</option>
+											<option data-image="./images/Metal Mania.png" value='./fonts/MetalMania-Regular.ttf'>Metal Mania</option>
+											<option data-image="./images/Miniver.png" value='./fonts/Miniver-Regular.ttf'>Miniver</option>
+											<option data-image="./images/Molle.png" value='./fonts/Molle-Regular.ttf'>Molle</option>
+											<option data-image="./images/New Rocker.png" value='./fonts/NewRocker-Regular.ttf'>New Rocker</option>
+											<option data-image="./images/Norican.png" value='./fonts/Norican-Regular.ttf'>Norican</option>
+											<option data-image="./images/Rawlings Old English.png" value='./fonts/rawlingsoldenglish-webfont.ttf'>Old English</option>
+											<option data-image="./images/Oleo Script.png" value='./fonts/OleoScript-Regular.ttf'>Oleo Script</option>
+											<option data-image="./images/Oleo Script Swash Caps.png" value='./fonts/OleoScriptSwashCaps-Regular.ttf'>Oleo Script Swash Caps</option>
+											<option data-image="./images/Pacifico.png" value='./fonts/Pacifico.ttf'>Pacifico</option>
+											<option data-image="./images/Pirata One.png" value='./fonts/PirataOne-Regular.ttf'>Pirata</option>
+											<option data-image="./images/Playball.png" value='./fonts/Playball-Regular.ttf'>Playball</option>
+											<option data-image="./images/Pro Full Block.png" value='./fonts/pro_full_block-webfont.ttf' selected>Pro Full Block</option>
+											<option data-image="./images/Richardson Fancy Block.png" value='./fonts/richardson_fancy_block-webfont.ttf'>Richardson Block</option>
+											<option data-image="./images/Rubik One.png" value='./fonts/RubikOne-Regular.ttf'>Rubik</option>
+											<option data-image="./images/Rum Raisin.png" value='./fonts/RumRaisin-Regular.ttf'>Rum Raisin</option>
+											<option data-image="./images/Satisfy.png" value='./fonts/Satisfy-Regular.ttf'>Satisfy</option>
+											<option data-image="./images/Seymour One.png" value='./fonts/SeymourOne-Regular.ttf'>Seymour</option>
+											<option data-image="./images/SPL28Script.png" value='./fonts/spl28script-webfont.ttf'>SPL28 Script</option>
+											<option data-image="./images/UA Tiffany.png" value='./fonts/tiffany-webfont.ttf'>Tiffany Regular</option>
+											<option data-image="./images/Trade Winds.png" value='./fonts/TradeWinds-Regular.ttf'>Trade Winds</option>
+											<option data-image="./images/MLB_Tuscan_New.png" value='./fonts/mlb_tuscan_new-webfont.ttf'>Tuscan</option>
+											<option data-image="./images/UnifrakturCook.png" value='./fonts/UnifrakturCook-Bold.ttf'>Unifraktur Cook</option>
+											<option data-image="./images/UnifrakturMaguntia.png" value='./fonts/UnifrakturMaguntia-Book.ttf'>Unifraktur Maguntia</option>
+											<option data-image="./images/Vibur.png" value='./fonts/Vibur-Regular.ttf'>Vibur</option>
+											<option data-image="./images/Viga.png" value='./fonts/Viga-Regular.ttf'>Viga</option>
+											<option data-image="./images/Wellfleet.png" value='./fonts/Wellfleet-Regular.ttf'>Wellfleet</option>
+											<option data-image="./images/Wendy One.png" value='./fonts/WendyOne-Regular.ttf'>Wendy</option>
+											<option data-image="./images/Yellowtail.png" value='./fonts/Yellowtail-Regular.ttf'>Yellowtail</option>			
+										</select>
+										<!--<select id="fontTypeCombo" class='textOption ProFullBlock' style="width:100%;">
 											<optgroup class='Acme'>
 											<option value='Acme'>Acme</option>
 											</optgroup>
@@ -649,9 +708,6 @@
 											<optgroup class='ProFullBlock'>
 											<option value='ProFullBlock' selected>Pro Full Block</option>
 											</optgroup>
-											<!--<optgroup class='Quicksand'>
-											<option value='Quicksand'>Quicksand</option>
-											</optgroup>-->
 											<optgroup class='RichardsonFancyBlock'>
 											<option value='RichardsonFancyBlock'>Richardson Block</option>
 											</optgroup>
@@ -700,7 +756,7 @@
 											<optgroup class='Yellowtail'>
 											<option value='Yellowtail'>Yellowtail</option>
 											</optgroup>
-										</select>
+										</select>-->
 									</td>
 								</tr>
 								<tr><td colspan="3" align="center">
@@ -885,7 +941,6 @@
 				$("#classicSleeve"+i).css("display","none");
 			}
 		}
-		$(".msDropDown").msDropDown();
 		if ($(".wordmarkToggle").is(':checked')) {
 			$(".textOption").each(function() {
 				$(this).prop( "disabled", false );
@@ -893,7 +948,10 @@
 			$(".textColorSelector").each(function() {
 				$(this).spectrum('enable');
 			})
-			$("#warpEffect").msDropDown().data("dd").set("disabled", false)
+			$(".ms-jersey-container").each(function() {
+				$(this).find(".ms-dd").removeClass("disabled")
+			})
+			//$("#warpEffect").msDropDown().data("dd").set("disabled", false)
 		} else {
 			state = false;
 			$(".textOption").each(function() {
@@ -902,16 +960,21 @@
 			$(".textColorSelector").each(function() {
 				$(this).spectrum('disable');
 			})
-			$("#warpEffect").msDropDown().data("dd").set("disabled", true)
+			$(".ms-jersey-container").each(function() {
+				$(this).find(".ms-dd").addClass("disabled")
+			})
+			//$("#warpEffect").msDropDown().data("dd").set("disabled", true)
 		}
+		
 		// objects = below.getObjects("path")
 		// for (x in objects) {
 		// 	if (objects[x].id == "stitching"+$("#stitchingSelect").val() && $("#stitchingCheck").is(':checked')) {
-		// 		objects[x].visible = true;
+		// 		objects[x].set("visible",true)
 		// 	} else {
-		// 		objects[x].visible = false;
+		// 		objects[x].set("visible",false)
 		// 	}
 		// }
+		let textDropdown = new MsDropdown(document.getElementById("fontTypeCombo"), {visibleRows: 6})
 	});
 	
 	$("#colorFormat").on("change",function(e) {
@@ -1032,50 +1095,24 @@
 		},
 		move: function(color) {
 			$(this).data('changed', true);
-			var objects = below.getObjects('path');
-			for (x in objects) {
-				if (objects[x].id == 'undershirtColor') {
-					objects[x].set("fill",color.toHexString())
-				}
-			}
-			var objects = logoCanvas.getObjects('path');
-			for (x in objects) {
-				if (objects[x].id.indexOf("Undershirt") > -1) {
-					objects[x].set("fill",color.toHexString())
-				}
+			for (o of undershirtObjects) {
+				o.set("fill",color.toHexString())
 			}
 			reRenderBG();
 			logoCanvas.renderAll();
 		},
 		change: function(color) {
 			$(this).data('changed', true);
-			var objects = below.getObjects('path');
-			for (x in objects) {
-				if (objects[x].id == 'undershirtColor') {
-					objects[x].set("fill",color.toHexString())
-				}
-			}
-			var objects = logoCanvas.getObjects('path');
-			for (x in objects) {
-				if (objects[x].id.indexOf("Undershirt") > -1) {
-					objects[x].set("fill",color.toHexString())
-				}
+			for (o of undershirtObjects) {
+				o.set("fill",color.toHexString())
 			}
 			reRenderBG();
 			logoCanvas.renderAll();
 		},
 		hide: function(color) {
-			var objects = below.getObjects('path');
-			for (x in objects) {
-				if (objects[x].id == 'undershirtColor') {
-					objects[x].set("fill",color.toHexString())
-				}
-			}
-			var objects = logoCanvas.getObjects('path');
-			for (x in objects) {
-				if (objects[x].id.indexOf("Undershirt") > -1) {
-					objects[x].set("fill",color.toHexString())
-				}
+			$(this).data('changed', false);
+			for (o of undershirtObjects) {
+				o.set("fill",color.toHexString())
 			}
 			reRenderBG();
 			logoCanvas.renderAll();
@@ -1238,7 +1275,7 @@
 								logoCanvas.remove(objects[x]);
 							}
 							if (objects[x].id == "wordmark") {
-								objects[x].visible = true;
+								objects[x].set("visible",true)
 							}
 						}
 						logoCanvas.renderAll();
@@ -1253,7 +1290,7 @@
 								logoCanvas.remove(objects[x]);
 							}
 							if (objects[x].id == "wordmark") {
-								objects[x].visible = true;
+								objects[x].set("visible",true)
 							}
 						}
 						logoCanvas.renderAll();
@@ -1330,7 +1367,7 @@
 										logoCanvas.remove(objects[x]);
 									}
 									if (objects[x].id == "wordmark") {
-										objects[x].visible = true;
+										objects[x].set("visible",true)
 									}
 								}
 								logoCanvas.renderAll();
@@ -1345,7 +1382,7 @@
 										logoCanvas.remove(objects[x]);
 									}
 									if (objects[x].id == "wordmark") {
-										objects[x].visible = true;
+										objects[x].set("visible",true)
 									}
 								}
 								logoCanvas.renderAll();
@@ -1414,7 +1451,7 @@
 										logoCanvas.remove(objects[x]);
 									}
 									if (objects[x].id == "wordmark") {
-										objects[x].visible = true;
+										objects[x].set("visible",true)
 									}
 								}
 								logoCanvas.renderAll();
@@ -1429,7 +1466,7 @@
 										logoCanvas.remove(objects[x]);
 									}
 									if (objects[x].id == "wordmark") {
-										objects[x].visible = true;
+										objects[x].set("visible",true)
 									}
 								}
 								logoCanvas.renderAll();
@@ -1630,51 +1667,64 @@
 			show: function(color) {
 				var original_color = color;
 				$(this).data('changed', false);
+				console.log("Hello world")
 			},
-			change: function(color) {
+			move: function(color) {
 				change = true;
 				if (color == null) {
-					var colorX = "transparent";
+					let colorX = "transparent";
 				} else {
 					colorX = color.toHexString();
 				}
 				$(this).data('changed', true);
-				var id = $(this).data('element');
-				objects = logoCanvas.getObjects();
-				for (x in objects) {
-					if (objects[x].get('type') == "group") {
-						var groupObjects = objects[x].getObjects();
-						for(y in groupObjects){
-							if (groupObjects[y].id == id) {
-								groupObjects[y].set("fill",colorX);
-								groupObjects[y].stroke = colorX;
-							}
-						}
-					} 
+				let id = $(this).data('element');
+				let group = logoCanvas.getObjects('group').find(o => o.id == "wordmark")
+				group.getObjects().forEach(function(o) {
+					if (o.id == id) {
+						o.set("fill", colorX)
+						o.set("stroke", colorX)
+					}
+					
+				})
+				logoCanvas.renderAll();
+				initializeWarp();
+			},change: function(color) {
+				change = true;
+				if (color == null) {
+					let colorX = "transparent";
+				} else {
+					colorX = color.toHexString();
 				}
+				$(this).data('changed', true);
+				let id = $(this).data('element');
+				let group = logoCanvas.getObjects('group').find(o => o.id == "wordmark")
+				group.getObjects().forEach(function(o) {
+					if (o.id == id) {
+						o.set("fill", colorX)
+						o.set("stroke", colorX)
+					}
+					
+				})
 				logoCanvas.renderAll();
 				initializeWarp();
 			},
 			hide: function(color) {
+				change = true;
 				if (color == null) {
-					var colorX = "transparent";
+					let colorX = "transparent";
 				} else {
 					colorX = color.toHexString();
 				}
 				$(this).data('changed', true);
-				var id = $(this).data('element');
-				objects = logoCanvas.getObjects();
-				for (x in objects) {
-					if (objects[x].get('type') == "group") {
-						var groupObjects = objects[x].getObjects();
-						for(y in groupObjects){
-							if (groupObjects[y].id == id) {
-								groupObjects[y].set("fill",colorX);
-								groupObjects[y].stroke = colorX;
-							}
-						}
-					} 
-				}
+				let id = $(this).data('element');
+				let group = logoCanvas.getObjects('group').find(o => o.id == "wordmark")
+				group.getObjects().forEach(function(o) {
+					if (o.id == id) {
+						o.set("fill", colorX)
+						o.set("stroke", colorX)
+					}
+					
+				})
 				logoCanvas.renderAll();
 				initializeWarp();
 			}
@@ -1695,9 +1745,9 @@
 				for(y in groupObjects){
 					if (groupObjects[y].id == id) {
 						if (state == true) {
-							groupObjects[y].visible = true;
+							groupObjects[y].set("visible",true)
 						} else {
-							groupObjects[y].visible = false;
+							groupObjects[y].set("visible",false)
 						}
 					}
 				}
@@ -2514,40 +2564,34 @@
 	
 	function initializeCanvas() {
 		
-		getDataUri("./images/"+defaultTexture, function(dataUri) {
-			var img = new Image;      // First create the image...
-			img.onload = function(){
-				texture.drawImage(img,0,0,512,512);
-				var can3 = document.getElementById('composite');
-				var composite = can3.getContext('2d');
-				composite.clearRect(0, 0, 512, 512);
-				if (Modernizr.canvasblending == true) {
-					composite.globalCompositeOperation = "multiply";
-					composite.drawImage(can, 0, 0);
-					composite.drawImage(can2, 0, 0);
-				} else {
-					texture.drawImage(img,0,0);
-					composite.drawImage(can, 0, 0);
-					texture.blendOnto(composite,'multiply');
-				}
-			};
-			img.src = dataUri;
+		var img = new Image;      // First create the image...
+		img.onload = function(){
+			texture.drawImage(img,0,0,512,512);
+			var can3 = document.getElementById('composite');
+			var composite = can3.getContext('2d');
+			composite.clearRect(0, 0, 512, 512);
+			if (Modernizr.canvasblending == true) {
+				composite.globalCompositeOperation = "multiply";
+				composite.drawImage(can, 0, 0);
+				composite.drawImage(can2, 0, 0);
+			} else {
+				texture.drawImage(img,0,0);
+				composite.drawImage(can, 0, 0);
+				texture.blendOnto(composite,'multiply');
+			}
+		};
+		img.src = "./images/"+defaultTexture;
+	
+		fabric.Image.fromURL("./images/"+defaultTexture, function(oImg) {
+			oImg.set("scaleX",0.5);
+			oImg.set("scaleY",0.5);
+			textureCanvas.setBackgroundImage(oImg, textureCanvas.renderAll.bind(textureCanvas));
 		})
-		
-		getDataUri("./images/"+defaultTexture, function(dataUri) {
-			fabric.Image.fromURL(dataUri, function(oImg) {
-				oImg.set("scaleX",0.5);
-				oImg.set("scaleY",0.5);
-				textureCanvas.setBackgroundImage(oImg, textureCanvas.renderAll.bind(textureCanvas));
-			})
-		})
-		
-		getDataUri("./images/fhm_cutout_2.png", function(dataUri) {
-			fabric.Image.fromURL(dataUri, function(oImg) {
-				oImg.set("scaleX",0.5);
-				oImg.set("scaleY",0.5);
-				logoCanvas.setBackgroundImage(oImg, logoCanvas.renderAll.bind(logoCanvas));
-			})
+	
+		fabric.Image.fromURL("./images/fhm_cutout_2.png", function(oImg) {
+			oImg.set("scaleX",0.5);
+			oImg.set("scaleY",0.5);
+			logoCanvas.setBackgroundImage(oImg, logoCanvas.renderAll.bind(logoCanvas));
 		})
 
 		var jerseyColor = new fabric.Rect({
@@ -3692,7 +3736,7 @@
 				return;
 			}
 
-			const path = font.getPath("BULLDOGS",wmLeft,wmTop,30)
+			const path = font.getPath("BULLDOGS",wmLeft,wmTop,parseInt($("#fontSize").val()))
 			const svgPath = path.toPathData(5)
 
 			wordmarkText = new fabric.Path(svgPath, {
@@ -3739,7 +3783,7 @@
 			wordmark = new fabric.Group([],{
 				originX:'center',
 				originY:'center',
-				visible:true,
+				visible:false,
 				id:'wordmark',
 				borderColor:'red',
 				cornerColor:'yellow',
@@ -3757,11 +3801,15 @@
 			wordmark.addWithUpdate(wordmarkTextStroke1)
 			wordmark.addWithUpdate(wordmarkText)
 
+			console.log(wordmark._objects[0])
+
 			logoCanvas.add(wordmark)
 		})
 
 		//logoCanvas.add(wordmark);
 		logoCanvas.add(laceGroup);
+
+		laceGroup.bringToFront()
 		
 		below.add(jerseyColor);
 		below.add(classicBody1a);
@@ -3967,7 +4015,15 @@
 					})
 				})
 			})
-		})	
+		})
+
+		undershirtObjects.push(modernCollar1Undershirt)
+		undershirtObjects.push(modernCollar2Undershirt)
+		undershirtObjects.push(modernCollar3Undershirt)
+		undershirtObjects.push(modernCollar4Undershirt)
+		undershirtObjects.push(undershirtColor)
+
+		
 
 		below.renderAll();
 		logoCanvas.renderAll();
@@ -4080,9 +4136,9 @@
 		for (x in objects) {
 			if ($.inArray(objects[x].id, ids) > -1) {
 				if (state == true) {
-					objects[x].visible = true;
+					objects[x].set("visible",true)
 				} else {
-					objects[x].visible = false;
+					objects[x].set("visible",false)
 				}
 			}
 		}
@@ -4101,9 +4157,9 @@
 		for (x in objects) {
 			if ($.inArray(objects[x].id, ids) > -1) {
 				if (state == true) {
-					objects[x].visible = true;
+					objects[x].set("visible",true)
 				} else {
-					objects[x].visible = false;
+					objects[x].set("visible",false)
 				}
 			}
 		}
@@ -4121,15 +4177,15 @@
 		var objects = below.getObjects("path");
 		for (x in objects) {
 			if (objects[x].id.indexOf("stitching") > -1) {
-				objects[x].visible = false;
+				objects[x].set("visible",false)
 			}
 		}
 		for (x in objects) {
 			if (objects[x].id == "stitching"+id) {
 				if (state == true) {
-					objects[x].visible = true;
+					objects[x].set("visible",true)
 				} else {
-					objects[x].visible = false;
+					objects[x].set("visible",false)
 				}
 			}
 		}
@@ -4141,15 +4197,15 @@
 		var objects = below.getObjects("path");
 		for (x in objects) {
 			if (objects[x].id.indexOf("stitching") > -1) {
-				objects[x].visible = false;
+				objects[x].set("visible",false)
 			}
 		}
 		for (x in objects) {
 			if (objects[x].id == "stitching"+id) {
 				if ($(this).parent().parent().find(":checkbox").is(':checked')) {
-					objects[x].visible = true;
+					objects[x].set("visible",true)
 				} else {
-					objects[x].visible = false;
+					objects[x].set("visible",false)
 				}
 			}
 		}
@@ -4229,31 +4285,21 @@
 	
 	function reRenderBG() {
 		below.renderAll();
-		getDataUri("./images/"+defaultTexture, function(dataUri) {
-			var img = new Image;      // First create the image...
-			img.onload = function(){
-				texture.drawImage(img,0,0,512,512);
-				var can3 = document.getElementById('composite');
-				var composite = can3.getContext('2d');
-				composite.clearRect(0, 0, 512, 512);
-				if (Modernizr.canvasblending == true) {
-					composite.globalCompositeOperation = "multiply";
-					composite.drawImage(can, 0, 0);
-					composite.drawImage(can2, 0, 0);
-				} else {
-					texture.drawImage(img,0,0);
-					composite.drawImage(can, 0, 0);
-					texture.blendOnto(composite,'multiply');
-				}
-			};
-			img.src = dataUri;
-		})
-		getDataUri("./images/"+defaultTexture, function(dataUri) {
-			fabric.Image.fromURL(dataUri, function(oImg) {
-				oImg.set("scaleX",0.5);
-				oImg.set("scaleY",0.5);
-				textureCanvas.setBackgroundImage(oImg, textureCanvas.renderAll.bind(textureCanvas));
-			})
+		let can3 = document.getElementById('composite');
+		let composite = can3.getContext('2d');
+		let img = new Image;      // First create the image...
+		img.onload = function(){
+			texture.drawImage(img,0,0,512,512);
+			composite.clearRect(0, 0, 512, 512);
+			composite.globalCompositeOperation = "multiply";
+			composite.drawImage(can, 0, 0);
+			composite.drawImage(can2, 0, 0);
+		};
+		img.src = "./images/"+defaultTexture;
+		fabric.Image.fromURL("./images/"+defaultTexture, function(oImg) {
+			oImg.set("scaleX",0.5);
+			oImg.set("scaleY",0.5);
+			textureCanvas.setBackgroundImage(oImg, textureCanvas.renderAll.bind(textureCanvas));
 		})
 	}
 
@@ -4266,9 +4312,9 @@
 	  			for (x in objects) {
 	  				if (objects[x].id.indexOf("Laces") > -1) {
 	  					if (objects[x].id == id) {
-	  						objects[x].visible = true;
+	  						objects[x].set("visible",true)
 	  					} else {
-	  						objects[x].visible = false;
+	  						objects[x].set("visible",false)
 	  					}
 	  				}
 	  			}
@@ -4285,9 +4331,9 @@
   			for (x in objects) {
   				if (objects[x].id.indexOf("laceHoles") > -1) {
   					if (objects[x].id == id) {
-  						objects[x].visible = true;
+  						objects[x].set("visible",true)
   					} else {
-  						objects[x].visible = false;
+  						objects[x].set("visible",false)
   					}
   				}
   			}
@@ -4313,9 +4359,9 @@
 		for (x in objects) {
 			if (objects[x].id.indexOf("modernCollar") > -1) {
 				if (array.indexOf(objects[x].id) > -1) {
-					objects[x].visible = true;
+					objects[x].set("visible",true)
 				} else {
-					objects[x].visible = false;
+					objects[x].set("visible",false)
 				}
 			}
 		}
@@ -4347,9 +4393,9 @@
 		for (x in objects) {
 			if (objects[x].id.indexOf("classicBody") > -1) {
 				if (array.indexOf(objects[x].id) > -1) {
-					objects[x].visible = true;
+					objects[x].set("visible",true)
 				} else {
-					objects[x].visible = false;
+					objects[x].set("visible",false)
 				}
 			}
 		}
@@ -4376,9 +4422,9 @@
 		for (x in objects) {
 			if (objects[x].id.indexOf("classicSleeve") > -1) {
 				if (array.indexOf(objects[x].id) > -1) {
-					objects[x].visible = true;
+					objects[x].set("visible",true)
 				} else {
-					objects[x].visible = false;
+					objects[x].set("visible",false)
 				}
 			}
 		}
@@ -4509,6 +4555,7 @@
 		const g = logoCanvas.getObjects('group').find(o => o.id === 'wordmark');	
 		switch($("#warpEffect").val()) {
 			case "none":
+				$("#wordmarkSpacing").prop( "disabled", false );
 				$(".diagonalWarp").css("display","none");
 				$(".verticalWarp").css("display","none");
 				$(".standardWarp").css("display","inline-block");
@@ -4526,6 +4573,7 @@
 				logoCanvas.renderAll();
 				break;
 			case "skewUp":
+				$("#wordmarkSpacing").prop( "disabled", false );
 				$(".diagonalWarp").css("display","none");
 				$(".verticalWarp").css("display","none");
 				$(".standardWarp").css("display","inline-block");
@@ -4544,6 +4592,7 @@
 				logoCanvas.renderAll();
 				break;
 			case "skewDown":
+				$("#wordmarkSpacing").prop( "disabled", false );
 				$(".diagonalWarp").css("display","none");
 				$(".verticalWarp").css("display","none");
 				$(".standardWarp").css("display","inline-block");
@@ -4562,6 +4611,7 @@
 				logoCanvas.renderAll();
 				break;
 			case "skewLeft":
+				$("#wordmarkSpacing").prop( "disabled", false );
 				$(".diagonalWarp").css("display","none");
 				$(".verticalWarp").css("display","none");
 				$(".standardWarp").css("display","inline-block");
@@ -4580,6 +4630,7 @@
 				logoCanvas.renderAll();
 				break;
 			case "skewRight":
+				$("#wordmarkSpacing").prop( "disabled", false );
 				$(".diagonalWarp").css("display","none");
 				$(".verticalWarp").css("display","none");
 				$(".standardWarp").css("display","inline-block");
@@ -4598,120 +4649,24 @@
 				logoCanvas.renderAll();
 				break;
 			case "diagonalText":
+				$("#wordmarkSpacing").prop( "disabled", true );
 				$(".standardWarp").css("display","none");
 				$(".diagonalWarp").css("display","inline-block");
 				diagonalText();
 				break;
 			default: 
+				$("#wordmarkSpacing").prop( "disabled", false );
 				$(".diagonalWarp").css("display","none");
 				$(".standardWarp").css("display","block");
 				warpText();
 				break;
 		}
-/* 		if ($("#warpEffect").val() == "skewUp") {
-			$(".diagonalWarp").css("display","none");
-			$(".standardWarp").css("display","block");
-			var amount = (parseInt($("#warpAmount").val())/100)*-1;
-			var objects = logoCanvas.getObjects();
-			for (x in objects) {
-				if (objects[x].get('name') == "warpedText") {
-					logoCanvas.remove(objects[x]);
-				}
-				if (objects[x].id == "wordmark") {
-					var tmp = objects[x].getObjects();
-					for (i in tmp) {
-						tmp[i].transformMatrix = [1, amount, 0, 1, 0, 0];
-						tmp[i].transformMatrix = [1, amount, 0, 1, 0, 0];
-						tmp[i].transformMatrix = [1, amount, 0, 1, 0, 0];					
-						tmp[i].set("left",0);
-						tmp[i].set("top",0);
-					}
-					objects[x].visible = true;
-				}
-			}
-			logoCanvas.renderAll();
-		} else if ($("#warpEffect").val() == "skewDown") {
-			$(".diagonalWarp").css("display","none");
-			$(".standardWarp").css("display","block");
-			var amount = parseInt($("#warpAmount").val())/100;
-			var objects = logoCanvas.getObjects();
-			for (x in objects) {
-				console.log(objects[x].id)
-				if (objects[x].get('name') == "warpedText") {
-					logoCanvas.remove(objects[x]);
-				}
-			}
-			g.set("visible", true)
-			g.set("skewX", 0)
-			g.set("skewY", amount)
-			logoCanvas.renderAll();
-			logoCanvas.renderAll();
-		} else if ($("#warpEffect").val() == "skewLeft") {
-			$(".diagonalWarp").css("display","none");
-			$(".standardWarp").css("display","block");
-			var objects = logoCanvas.getObjects();
-			for (x in objects) {
-				if (objects[x].get('name') == "warpedText") {
-					logoCanvas.remove(objects[x]);
-				}
-				if (objects[x].id == "wordmark") {
-					var tmp = objects[x].getObjects();
-					for (i in tmp) {
-						tmp[i].transformMatrix = [1, 0, amount, 1, 0, 0];
-						tmp[i].transformMatrix = [1, 0, amount, 1, 0, 0];
-						tmp[i].transformMatrix = [1, 0, amount, 1, 0, 0];	
-						tmp[i].set("left",0);
-						tmp[i].set("top",0);
-					}
-					objects[x].visible = true;
-				}
-			}
-			logoCanvas.renderAll();
-		} else if ($("#warpEffect").val() == "skewRight") {
-			$(".diagonalWarp").css("display","none");
-			$(".standardWarp").css("display","block");
-			var amount = (parseInt($("#warpAmount").val())/100)*-1;
-			var objects = logoCanvas.getObjects();
-			for (x in objects) {
-				if (objects[x].get('name') == "warpedText") {
-					logoCanvas.remove(objects[x]);
-				}
-				if (objects[x].id == "wordmark") {
-					var tmp = objects[x].getObjects();
-					for (i in tmp) {
-						tmp[i].transformMatrix = [1, 0, amount, 1, 0, 0];
-						tmp[i].transformMatrix = [1, 0, amount, 1, 0, 0];
-						tmp[i].transformMatrix = [1, 0, amount, 1, 0, 0];
-						tmp[i].set("left",0);
-						tmp[i].set("top",0);
-					}
-					objects[x].visible = true;
-				}
-			}	
-			logoCanvas.renderAll();
-
-		} else if ($("#warpEffect").val() == "diagonalText") {
-			$(".standardWarp").css("display","none");
-			$(".diagonalWarp").css("display","inline-block");
-			diagonalText();
-		} else {
-			$(".diagonalWarp").css("display","none");
-			$(".standardWarp").css("display","block");
-			warpText();
-		}	 */
 	}
 	
-	$(".scaling").on("change",function(e) {
-		wordmarkText.fontSize = $(this).val()
-		wordmarkTextStroke1.fontSize = $(this).val()
-		wordmarkTextStroke2.fontSize = $(this).val()
-		logoCanvas.renderAll();
-		initializeWarp();
-	})	
-
-	$(".spacing").on("change",function(e) {
-		logoCanvas.renderAll();
-		initializeWarp();
+	$(".scaling").on("input",function(e) {
+		wordmarkChange($("#fontTypeCombo").val(),false)
+		//logoCanvas.renderAll();
+		//initializeWarp();
 	})	
 	
 	function diagonalText() {
@@ -4749,7 +4704,7 @@
 			})
 
 			for (chr of diag) {
-				const path = font.getPath(chr,y,x,30)
+				const path = font.getPath(chr,y,x,parseInt($("#fontSize").val()))
 				const svgPath = path.toPathData(5)
 
 				wordmarkText = new fabric.Path(svgPath, {
@@ -4832,7 +4787,7 @@
 				var objects = logoCanvas.getObjects();
 				for (x in objects) {
 					if (objects[x].id == "wordmark") {
-						objects[x].visible = false;
+						objects[x].set("visible",false)
 					}
 				}
 
@@ -4888,7 +4843,7 @@
 					var objects = logoCanvas.getObjects();
 					for (x in objects) {
 						if (objects[x].id == "wordmark") {
-							objects[x].visible = false;
+							objects[x].set("visible",false)
 						}
 					}
 
@@ -4902,12 +4857,6 @@
 	
 	function warpText() {
 		var warp = true;
-		wordmarkText.set("scaleX",1);
-		wordmarkText.set("scaleY",1);
-		wordmarkTextStroke1.set("scaleX",1);
-		wordmarkTextStroke1.set("scaleY",1);
-		wordmarkTextStroke2.set("scaleX",1);
-		wordmarkTextStroke2.set("scaleY",1);
 		let g = logoCanvas.getObjects('group').find(o => o.id === 'wordmark');	
 		g.set("skewX", 0)
 		g.set("skewY", 0)
@@ -4932,7 +4881,7 @@
 						tmp[i].set("left",0);
 						tmp[i].set("top",0);
 					}
-					objects[x].visible = true;
+					objects[x].set("visible",true)
 				}
 			}
 			logoCanvas.renderAll();
@@ -4954,25 +4903,22 @@
 						tmp[i].set("left",0);
 						tmp[i].set("top",0);
 					}
-					objects[x].visible = true;
+					objects[x].set("visible",true)
 				}
 			}
 
 			logoCanvas.discardActiveObject().renderAll();
-			warpCanvas.clear()
-			warpCanvas.add(wordmarkTextStroke2);
-			warpCanvas.add(wordmarkTextStroke1);
-			warpCanvas.add(wordmarkText);
-			var tmpObjects = warpCanvas.getObjects()
-			for (x in tmpObjects) {
-				if (tmpObjects[x].text != $("#wordmarkTextBox").val()) {
-					tmpObjects[x].text = $("#wordmarkTextBox").val();
-				}
-				tmpObjects[x].set({
-					scaleX: tmpObjects[x].scaleX * 2,
-					scaleY: tmpObjects[x].scaleY * 2
-				})
-			}
+
+			warpCanvas.clear();
+			
+			wordmark.clone(function(cloned) {
+				_clipboard = cloned;
+				_clipboard.set("id", "wordmarkClone")
+				_clipboard.set("scaleX", 2)
+				_clipboard.set("scaleY", 2)
+				warpCanvas.add(_clipboard)
+			});
+
 			warpCanvas.discardActiveObject().renderAll();
 		
 			var theImage = warpCanvas.toDataURL();
@@ -5031,12 +4977,16 @@
 				var objects = logoCanvas.getObjects();
 				for (x in objects) {
 					if (objects[x].id == "wordmark") {
-						objects[x].visible = false;
+						objects[x].set("visible",false)
 					}
 				}
 
 				logoCanvas.add(image);
 				logoCanvas.renderAll();
+
+				let foo = logoCanvas.getObjects('group').find(o => o.id == "wordmark")
+				foo.set("scaleX",1)
+				foo.set("scaleY",1)
 				$("#overlay").css("display","none");
 			}
 		}
@@ -5062,27 +5012,85 @@
 				logoCanvas.remove(objects[x]);
 			}
 			if (objects[x].id == "wordmark" && restore == true) {
-				objects[x].visible = true;
+				objects[x].set("visible",true)
 			}
 		}
 	}
 	
 	$("#fontTypeCombo").on("change",function() {
-		var style = $(this).val();
-		var font_family = $("."+style).css("font-family");
-		var objects = logoCanvas.getObjects("group");
-		for (x in objects) {
-			if (objects[x].id == "wordmark") {
-				var tmp = objects[x].getObjects();
-				for (i in tmp) {
-					tmp[i].fontFamily = font_family;
-				}
-			}
-		}
-		logoCanvas.renderAll();
-		$(this).removeClass().addClass(style);
-		initializeWarp();
+		//var style = $(this).val();
+		wordmarkChange($(this).val(),false)
+		//initializeWarp();
 	})
+
+	function wordmarkChange(data,newFont) {
+		let tmp = (data.fontPath == undefined) ? data : data.fontPath;
+		opentype.load(tmp, (err,font) => {
+			if (err || !font) {
+				console.log(err)
+				return;
+			}
+
+			let grp = logoCanvas.getObjects("group").find(o => o.id === "wordmark")
+
+			grp.getObjects().forEach(function(o) {
+				grp.removeWithUpdate(o)
+			})
+
+			console.log($("#wordmarkSpacing").val()/100)
+			const path = font.getPath($("#wordmarkTextBox").val(),wmLeft,wmTop,parseInt($("#fontSize").val()),{letterSpacing:$("#wordmarkSpacing").val()/100})
+			const svgPath = path.toPathData(5)
+
+			wordmarkText = new fabric.Path(svgPath, {
+				left: 256,
+				originX: 'center',
+				originY: 'center',
+				centeredScaling: true,
+				centeredRotation: true,
+				id: 'wordmarkText',
+				fill: initialColors["wordmarkTextColor"],
+				stroke: initialColors["wordmarkTextColor"],
+				strokeWidth: 0,
+				hasBorders: false
+			})
+		
+			wordmarkTextStroke1 = new fabric.Path(svgPath, {
+				left: 256,
+				originX: 'center',
+				originY: 'center',
+				centeredScaling: true,
+				centeredRotation: true,
+				stroke: initialColors["wordmarkTextStroke1Color"],
+				strokeWidth: 4,
+				strokeLineCap: "round",
+				id: 'wordmarkTextStroke1',
+				fill: initialColors["wordmarkTextStroke1Color"],
+				hasBorders: false
+			})
+		
+			wordmarkTextStroke2 = new fabric.Path(svgPath, {
+				left: 256,
+				originX: 'center',
+				originY: 'center',
+				centeredScaling: true,
+				centeredRotation: true,
+				stroke: initialColors["wordmarkTextStroke2Color"],
+				strokeWidth: 6,
+				strokeLineCap: "round",
+				id: 'wordmarkTextStroke2',
+				fill: initialColors["wordmarkTextStroke2Color"],
+				hasBorders: false
+			})
+
+			grp.addWithUpdate(wordmarkTextStroke2)
+			grp.addWithUpdate(wordmarkTextStroke1)
+			grp.addWithUpdate(wordmarkText)
+
+			logoCanvas.renderAll()
+
+			$("#warpEffect").trigger("change")
+		})
+	}
 	
 	$(".wordmarkToggle").on("click",function() {
 		if ($(this).is(':checked')) {
@@ -5093,7 +5101,9 @@
 			$(".textColorSelector").each(function() {
 				$(this).spectrum('enable');
 			})
-			$("#warpEffect").msDropDown().data("dd").set("disabled", false);
+			$(".ms-jersey-container").each(function() {
+				$(this).find(".ms-dd").removeClass("disabled")
+			})	
 			$("#warpAmount").prop("disabled",false);
 		} else {
 			state = false;
@@ -5105,7 +5115,9 @@
 			})
 			logoCanvas.discardActiveObject();
 			$("#tipContainer").html("");
-			$("#warpEffect").msDropDown().data("dd").set("disabled", true);
+			$(".ms-jersey-container").each(function() {
+				$(this).find(".ms-dd").addClass("disabled")
+			})	
 			$("#warpAmount").prop("disabled",true);
 		}
 		var id = $(this).data("id");
@@ -5114,23 +5126,22 @@
 			if (objects[x].id == id || objects[x].get('name') == "warpedText") {
 				if (state == true) {
 					if ($("#warpEffect").val() == "none" && objects[x].get('type') == "group") {
-						objects[x].visible = true;
+						objects[x].set("visible",true)
 					} else if ($("#warpEffect").val() != "none" && objects[x].get('type') == "image") {
-						objects[x].visible = true;
+						objects[x].set("visible",true)
 					}
 				} else {
-					objects[x].visible = false;
+					objects[x].set("visible",false)
 				}
 			} 
 		}
 		logoCanvas.renderAll();
 	})
 
-	$("#wordmarkTextBox").on("change",function(e) {
-		wordmarkText.text = $(this).val();
-		wordmarkTextStroke1.text = $(this).val();
-		wordmarkTextStroke2.text = $(this).val();
-		initializeWarp();
+	$("#wordmarkTextBox").on("input",function(e) {
+		wordmarkChange($("#fontTypeCombo").val(),false)
+		logoCanvas.renderAll();
+		//initializeWarp();
 	})
 
 	$("#fakeFontButton").on("click", function(e) {
