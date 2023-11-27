@@ -432,13 +432,19 @@
             eyedropperButton.on("click.spectrum", function (e) {
                 e.stopPropagation();
                 e.preventDefault();
+                //let tmp = defaultTexture
+                //defaultTexture = "blank_sweater_texture.png"
+                reRenderBG()
                 const eyeDropper = new EyeDropper();
-                below.setOverlayImage(null,below.renderAll.bind(below));
                 eyeDropper.open().then(result => {
-			        below.setOverlayImage('./images/guides.png',below.renderAll.bind(below));
+                    //defaultTexture = tmp
+                    reRenderBG()
                     setFromTextInput(result.sRGBHex) 
                     hide()
-                })
+                }).catch(error => {
+                    console.log(error)
+                });
+                
             })
 
             toggleButton.text(opts.showPaletteOnly ? opts.togglePaletteMoreText : opts.togglePaletteLessText);
