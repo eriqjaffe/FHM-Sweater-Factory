@@ -18,6 +18,7 @@ const increment = require('add-filename-increment');
 const Store = require("electron-store")
 const fontname = require("fontname")
 const chokidar = require('chokidar')
+const font2base64 = require("node-font2base64")
 
 const app2 = express()
 const port = 8082;
@@ -271,6 +272,48 @@ ipcMain.on('local-font', (event, arg) => {
 	})
 })
 
+ipcMain.on('local-font-folder', (event, arg) => {
+	const jsonObj = {}
+	const jsonArr = []
+
+	filenames = fs.readdirSync(userFontsFolder);
+	for (i=0; i<filenames.length; i++) {
+        if (path.extname(filenames[i]).toLowerCase() == ".ttf" || path.extname(filenames[i]).toLowerCase() == ".otf") {
+			const filePath = path.join(userFontsFolder,filenames[i])
+			try {
+				const fontMeta = fontname.parse(fs.readFileSync(filePath))[0];
+				var ext = getExtension(filePath)
+				const dataUrl = font2base64.encodeToDataUrlSync(filePath)
+				var fontPath = url.pathToFileURL(filePath)
+				var json = {
+					"status": "ok",
+					"fontName": fontMeta.fullName,
+					"fontStyle": fontMeta.fontSubfamily,
+					"familyName": fontMeta.fontFamily,
+					"fontFormat": ext,
+					"fontMimetype": 'font/' + ext,
+					"fontData": fontPath.href,
+					"fontBase64": dataUrl,
+					"fontPath": filePath,
+				};
+				jsonArr.push(json)
+			} catch (err) {
+				const json = {
+					"status": "error",
+					"fontName": path.basename(filePath),
+					"fontPath": filePath,
+					"message": err
+				}
+				jsonArr.push(json)
+				//fs.unlinkSync(filePath)
+			}
+		}
+	}
+	jsonObj.result = "success"
+	jsonObj.fonts = jsonArr
+	event.sender.send('local-font-folder-response', jsonObj)
+})
+
 ipcMain.on('save-sweater', (event, arg) => {
 	var buffer = Buffer.from(arg.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
 
@@ -432,156 +475,60 @@ ipcMain.on('warp-text', (event, arg) => {
 	})
 })
 
-app2.post('/jitterText', (req, res) => {
-	console.log(req.body)
-	var text = req.body.text;
-	var diag = text.split("");
-	var fill = req.body.fill;
-	var stroke1 = req.body.stroke1Color;
-	var stroke2 = req.body.stroke2Color;
-	var font = fontArray[req.body.font];
-	var size = req.body.size;
-	var h = parseInt(req.body.hSpacing);
-	var v = parseInt(req.body.vSpacing);
-	var stroke1Visible = (req.body.stroke1Visible === 'true');
-	var stroke2Visible = (req.body.stroke2Visible === 'true');
-	var fillVisible = (req.body.fillVisible === 'true');
-	var x = 10;
-	var y = 10;
-	var cmd;
-
-	var font_name = 'custom';
-	var font_format = 'woff2'; // best compression
-	var font_mimetype = 'font/ttf';
-	if (req.body.font.substring(0,5) === "file:") {
-		var buff = fs.readFileSync(url.fileURLToPath(req.body.font));
-	} else {
-		var buff = fs.readFileSync(__dirname+'\\fonts\\'+req.body.font);
-	}
-	var font_data = 'data:'+font_mimetype+';charset=ascii;base64,' + buff.toString('base64')
-
-	registerWindow(window, document)
-
-	const canvas = SVG(document.documentElement).size(2048, 2048)
-
-	canvas.clear()
-
-	canvas.defs().element('style').words(
-		"@font-face {" +
-		"  font-family: 'temp';" +
-		"  src: url('"+font_data+"')" +
-		"    format('"+font_format+"')" +
-		"  ;" +
-		"}"
-	)
-
-	var group = canvas.group();
-
-	if (stroke2Visible) {
-		for (var i=0; i<diag.length; i++) {
-			var text = group.text(diag[i]).font({
-				size: size*2,
-				fill: stroke2,
-				family: 'temp'
+ipcMain.on('drop-image', (event, arg) => {
+    let json = {}
+	Jimp.read(arg, (err, image) => {
+		if (err) {
+			json.filename = "error not an image"
+			json.image = "error not an image"
+			event.sender.send('upload-image-response', json)
+		} else {
+			image.getBase64(Jimp.AUTO, (err, ret) => {
+				json.path = arg
+				json.filename = path.basename(arg)
+				json.image = ret
+				//json.palette = palette
+				event.sender.send('upload-image-response', json)
 			})
-			text.x(x)
-			text.y(y)
-			text.stroke({ color: stroke2, width: 10 })
-			x += h*2;
-			y += v*2;
 		}
-	}
-	x = 10;
-	y = 10;
-
-	if (stroke1Visible) {
-		for (var i=0; i<diag.length; i++) {
-			var text = group.text(diag[i])
-			text.font({
-				size: size*2,
-				fill: stroke1,
-				family: 'temp'
-			})
-			text.x(x)
-			text.y(y)
-			text.stroke({ color: stroke1, width: 6 })
-			x += h*2;
-			y += v*2;
-		}
-	}
-	x = 10;
-	y = 10;
-
-	if (fillVisible) {
-		for (var i=0; i<diag.length; i++) {
-			var text = group.text(diag[i])
-			text.font({
-				size: size*2,
-				fill: fill,
-				family: 'temp'
-			})
-			text.x(x)
-			text.y(y)
-			x += h*2;
-			y += v*2;
-		}
-	}
-	group.x(10)
-	group.y(10)
-	canvas.height(group.bbox().height+20);
-	canvas.width(group.bbox().width+20)
-	var buff2 = Buffer.from(canvas.svg());
-	res.end('data:image/svg+xml;base64,'+buff2.toString('base64'))
+	})
+	.catch(err => { 
+		console.log(err)
+		json.filename = "error not an image"
+		json.image = "error not an image"
+		event.sender.send('upload-image-response', err) 
+	})		
 })
 
-app2.get("/customFont", (req, res) => {
-	dialog.showOpenDialog(null, {
-		properties: ['openFile'],
-		filters: [
-			{ name: 'Fonts', extensions: ['ttf', 'otf'] }
-		]
-	}).then(result => {
-		if(!result.canceled) {
-			ttfInfo(result.filePaths[0], function(err, info) {
-			var ext = getExtension(result.filePaths[0])
-				//var buff = fs.readFileSync(result.filePaths[0]);
-				//console.log(tempDir)
-				var fontPath = url.pathToFileURL(tempDir + '/'+path.basename(result.filePaths[0]))
-				//console.log(fontPath.href)
-				fs.copyFile(result.filePaths[0], tempDir + '/'+path.basename(result.filePaths[0]), (err) => {
-				//fs.copyFile(result.filePaths[0], path.join(app.getAppPath(), 'resources', 'app', 'fonts', path.basename(result.filePaths[0])), (err) => {
-					if (err) {
-						console.log(err)
-					} else {
-						res.json({
-							"fontName": info.tables.name[1],
-							"fontStyle": info.tables.name[2],
-							"familyName": info.tables.name[6],
-							"fontFormat": ext,
-							"fontMimetype": 'font/' + ext,
-							"fontData": fontPath.href
-						});
-						res.end()
-					}
-				})
-				/* fs.writeFile(__dirname + '/fonts/'+path.basename(result.filePaths[0]), buff, function (err) {
-					if (err) return console.log(err);
-					res.json({
-						"fontName": info.tables.name[1],
-						"fontStyle": info.tables.name[2],
-						"familyName": info.tables.name[6],
-						"fontFormat": ext,
-						"fontMimetype": 'font/' + ext,
-						"fontData": 'data:'+'font/' + ext+';charset=ascii;base64,' + buff.toString('base64')
-					});
-				  });
-				
-			res.end() */
-			});
+ipcMain.on('drop-font', (event, arg) => {
+    let json = {}
+    try {
+		const filePath = path.join(userFontsFolder,path.basename(arg))
+		const fontMeta = fontname.parse(fs.readFileSync(arg))[0];
+		var ext = getExtension(arg)
+		var fontPath = url.pathToFileURL(arg)
+		json = {
+			"status": "ok",
+			"fontName": fontMeta.fullName,
+			"fontStyle": fontMeta.fontSubfamily,
+			"familyName": fontMeta.fontFamily,
+			"fontFormat": ext,
+			"fontMimetype": 'font/' + ext,
+			"fontData": fontPath.href,
+			"fontPath": filePath
+		};
+		fs.copyFileSync(arg, filePath)
+		event.sender.send('local-font-response', json)
+	} catch (err) {
+		json = {
+			"status": "error",
+			"fontName": path.basename(arg),
+			"fontPath": arg,
+			"message": err
 		}
-	}).catch(err => {
-		console.log(err)
-	})
+		event.sender.send('local-font-response', json)
+		//fs.unlinkSync(req.query.file)
+	}
 })
 
 function getExtension(filename) {

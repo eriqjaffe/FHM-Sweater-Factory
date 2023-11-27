@@ -104,6 +104,9 @@
 		let customFonts = [];
 
 		let fontList = ["Acme", "Athletic Gothic", "Athletic Gothic Shadow", "Fancy Block", "Berkshire Swash", "Cantora", "Caxton Roman", "Chela", "Circus", "Condiment", "Cookie", "Courgette", "Croissant", "Damion", "Engagement", "Fancy Block", "Germania", "Graduate", "Grand Hotel", "Jockey", "Kansas Tuscan", "Kaushan Script", "Leckerli", "Lily Script", "Lobster", "Lobster Two", "Metal Mania", "Miniver", "Molle", "New Rocker", "Norican", "Old English", "Oleo Script", "Oleo Script Swash Caps", "Pacifico", "Pirata", "Playball", "Pro Full Block", "Richardson Block", "Rubik", "Rum Raisin", "Satisfy", "Seymour", "SPL28 Script", "Tiffany Regular", "Trade Winds", "Tuscan", "Unifraktur Cook", "Unifraktur Maguntia", "Vibur", "Viga", "Wellfleet", "Wendy", "Yellowtail"]
+
+		const validFontTypes = ["ttf","otf"]
+		const validImageTypes = ["png","jpg","jpeg","bmp","gif","tiff"]
 	</script>
     <!--[if IE]>
       <style type="text/css">
@@ -141,10 +144,13 @@
 						<input type="hidden" id="aboveTexture" name="aboveTexture" value="">
 					</form>-->
 				</div>
+				
 				<div id="canvasContainer" style="width:512px; height:575px;">
+					<div id="dropContainer">
 					<div id="overlay" class="sample"></div>
 					<canvas id="composite" width="512" height="512" style="position:absolute; top:10; left:10; z-index:1;"></canvas>
 					<canvas id="above" width="512" height="512" style="position:absolute; top:10; left:10; z-index:2;"></canvas>
+					</div>
 					<div id="tipContainer" style="height:60px; padding-top:5px; font-weight:bold;"></div>
 					<div id="donateContainer" style="width:512px; height: 50px; text-align:right; padding-top:10px">
 						<a href="https://www.paypal.com/donate?business=UTTZRPAMBFCWA&no_recurring=1&currency_code=USD" target="_blank">
@@ -598,176 +604,13 @@
 											<option data-image="./images/Wendy One.png" value='./fonts/WendyOne-Regular.ttf'>Wendy</option>
 											<option data-image="./images/Yellowtail.png" value='./fonts/Yellowtail-Regular.ttf'>Yellowtail</option>			
 										</select>
-										<!--<select id="fontTypeCombo" class='textOption ProFullBlock' style="width:100%;">
-											<optgroup class='Acme'>
-											<option value='Acme'>Acme</option>
-											</optgroup>
-											<optgroup class='AthleticGothic'>
-											<option value='AthleticGothic'>Athletic Gothic</option>
-											</optgroup>
-											<optgroup class='AthleticGothicShadow'>
-											<option value='AthleticGothicShadow'>Athletic Gothic Shadow</option>
-											</optgroup>
-											<optgroup class='BeavertonScript'>
-											<option value='BeavertonScript'>Fancy Block</option>
-											</optgroup>
-											<optgroup class='Berkshire_Swash'>
-											<option value='Berkshire_Swash'>Berkshire Swash</option>
-											</optgroup>
-											<optgroup class='Cantora_One'>
-											<option value='Cantora_One'>Cantora</option>
-											</optgroup>
-											<optgroup class='CaxtonRoman'>
-											<option value='CaxtonRoman'>Caxton Roman</option>
-											</optgroup>
-											<optgroup class='Chela_One'>
-											<option value='Chela_One'>Chela</option>
-											</optgroup>
-											<optgroup class='Circus'>
-											<option value='Circus'>Circus</option>
-											</optgroup>
-											<optgroup class='Condiment'>
-											<option value='Condiment'>Condiment</option>
-											</optgroup>
-											<optgroup class='Cookie'>
-											<option value='Cookie'>Cookie</option>
-											</optgroup>
-											<optgroup class='Courgette'>
-											<option value='Courgette'>Courgette</option>
-											</optgroup>
-											<optgroup class='Croissant_One'>
-											<option value='Croissant_One'>Croissant</option>
-											</optgroup>
-											<optgroup class='Damion'>
-											<option value='Damion'>Damion</option>
-											</optgroup>
-											<optgroup class='Engagement'>
-											<option value='Engagement'>Engagement</option>
-											</optgroup>
-											<optgroup class='RawlingsFancyBlock'>
-											<option value='RawlingsFancyBlock'>Fancy Block</option>
-											</optgroup>
-											<optgroup class='Germania_One'>
-											<option value='Germania_One'>Germania</option>
-											</optgroup>
-											<optgroup class='Graduate'>
-											<option value='Graduate'>Graduate</option>
-											</optgroup>
-											<optgroup class='Grand_Hotel'>
-											<option value='Grand_Hotel'>Grand Hotel</option>
-											</optgroup>
-											<optgroup class='Jockey_One'>
-											<option value='Jockey_One'>Jockey</option>
-											</optgroup>
-											<optgroup class='Kansas'>
-											<option value='Kansas'>Kansas Tuscan</option>
-											</optgroup>
-											<optgroup class='Kaushan_Script'>
-											<option value='Kaushan_Script'>Kaushan Script</option>
-											</optgroup>
-											<optgroup class='Leckerli_One'>
-											<option value='Leckerli_One'>Leckerli</option>
-											</optgroup>
-											<optgroup class='Lily_Script_One'>
-											<option value='Lily_Script_One'>Lily Script</option>
-											</optgroup>
-											<optgroup class='Lobster'>
-											<option value='Lobster'>Lobster</option>
-											</optgroup>
-											<optgroup class='Lobster_Two'>
-											<option value='Lobster_Two'>Lobster Two</option>
-											</optgroup>
-											<optgroup class='Metal_Mania'>
-											<option value='Metal_Mania'>Metal Mania</option>
-											</optgroup>
-											<optgroup class='Miniver'>
-											<option value='Miniver'>Miniver</option>
-											</optgroup>
-											<optgroup class='Molle'>
-											<option value='Molle'>Molle</option>
-											</optgroup>
-											<optgroup class='New_Rocker'>
-											<option value='New_Rocker'>New Rocker</option>
-											</optgroup>
-											<optgroup class='Norican'>
-											<option value='Norican'>Norican</option>
-											</optgroup>
-											<optgroup class='OldEnglish'>
-											<option value='OldEnglish'>Old English</option>
-											</optgroup>
-											<optgroup class='Oleo_Script'>
-											<option value='Oleo_Script'>Oleo Script</option>
-											</optgroup>
-											<optgroup class='Oleo_Script_Swash_Caps'>
-											<option value='Oleo_Script_Swash_Caps'>Oleo Script Swash Caps</option>
-											</optgroup>
-											<optgroup class='Pacifico'>
-											<option value='Pacifico'>Pacifico</option>
-											</optgroup>
-											<optgroup class='Pirata_One'>
-											<option value='Pirata_One'>Pirata</option>
-											</optgroup>
-											<optgroup class='Playball'>
-											<option value='Playball'>Playball</option>
-											</optgroup>
-											<optgroup class='ProFullBlock'>
-											<option value='ProFullBlock' selected>Pro Full Block</option>
-											</optgroup>
-											<optgroup class='RichardsonFancyBlock'>
-											<option value='RichardsonFancyBlock'>Richardson Block</option>
-											</optgroup>
-											<optgroup class='Rubik_One'>
-											<option value='Rubik_One'>Rubik</option>
-											</optgroup>
-											<optgroup class='Rum_Raisin'>
-											<option value='Rum_Raisin'>Rum Raisin</option>
-											</optgroup>
-											<optgroup class='Satisfy'>
-											<option value='Satisfy'>Satisfy</option>
-											</optgroup>
-											<optgroup class='Seymour_One'>
-											<option value='Seymour_One'>Seymour</option>
-											</optgroup>
-											<optgroup class='spl28'>
-											<option value='spl28'>SPL28 Script</option>
-											</optgroup>
-											<optgroup class='TiffanyRegular'>
-											<option value='TiffanyRegular'>Tiffany Regular</option>
-											</optgroup>
-											<optgroup class='Trade_Winds'>
-											<option value='Trade_Winds'>Trade Winds</option>
-											</optgroup>
-											<optgroup class='Tuscan'>
-											<option value='Tuscan'>Tuscan</option>
-											</optgroup>
-											<optgroup class='UnifrakturCook'>
-											<option value='UnifrakturCook'>Unifraktur Cook</option>
-											</optgroup>
-											<optgroup class='UnifrakturMaguntia'>
-											<option value='UnifrakturMaguntia'>Unifraktur Maguntia</option>
-											</optgroup>
-											<optgroup class='Vibur'>
-											<option value='Vibur'>Vibur</option>
-											</optgroup>
-											<optgroup class='Viga'>
-											<option value='Viga'>Viga</option>
-											</optgroup>
-											<optgroup class='Wellfleet'>
-											<option value='Wellfleet'>Wellfleet</option>
-											</optgroup>
-											<optgroup class='Wendy_One'>
-											<option value='Wendy_One'>Wendy</option>
-											</optgroup>
-											<optgroup class='Yellowtail'>
-											<option value='Yellowtail'>Yellowtail</option>
-											</optgroup>
-										</select>-->
 									</td>
 								</tr>
 								<tr><td colspan="3" align="center">
 									<input id="customFont" type="file" name="customFont" accept=".ttf,.otf,.woff,.woff2" style="display:none;" />
 									<input type="button" class="button textOption" id="fakeFontButton" value="Choose a Local Font..." />
 									<input type="button" class="button textOption" id="uploadTheFont" value="Upload Font" style="display:none;" />
+									<input type="button" class="button textOption" id="localFontFolder" value="Refresh User Fonts" disabled/>
 								</td></tr>
 							</table>
 						</div>
@@ -956,7 +799,6 @@
 			$(".ms-jersey-container").each(function() {
 				$(this).find(".ms-dd").removeClass("disabled")
 			})
-			//$("#warpEffect").msDropDown().data("dd").set("disabled", false)
 		} else {
 			state = false;
 			$(".textOption").each(function() {
@@ -968,18 +810,14 @@
 			$(".ms-jersey-container").each(function() {
 				$(this).find(".ms-dd").addClass("disabled")
 			})
-			//$("#warpEffect").msDropDown().data("dd").set("disabled", true)
 		}
 		
-		// objects = below.getObjects("path")
-		// for (x in objects) {
-		// 	if (objects[x].id == "stitching"+$("#stitchingSelect").val() && $("#stitchingCheck").is(':checked')) {
-		// 		objects[x].set("visible",true)
-		// 	} else {
-		// 		objects[x].set("visible",false)
-		// 	}
-		// }
 		let textDropdown = new MsDropdown(document.getElementById("fontTypeCombo"), {visibleRows: 6})
+
+		$("#localFontFolder").trigger("click")
+
+		sortFontDropdown()
+
 	});
 	
 	$("#colorFormat").on("change",function(e) {
@@ -2527,7 +2365,6 @@
 			exportCtx.drawImage(can3,0,0);
 			exportCtx.drawImage(can4Full,0,0);
 			ipcRenderer.send('save-sweater', {imgdata: finalCanvas.toDataURL(), name: fileName})
-			//new CanvasSaver('http://127.0.0.1:'+port+'/saveJersey').savePNG(document.getElementById("finalFull"), fileName, "sweater");
 			getDataUri("./images/fhm_cutout_2.png", function(dataUri) {
 				fabric.Image.fromURL(dataUri, function(oImg) {
 					oImg.set("scaleX",0.5);
@@ -3746,7 +3583,7 @@
 			wordmark = new fabric.Group([],{
 				originX:'center',
 				originY:'center',
-				visible:false,
+				visible: false,
 				id:'wordmark',
 				borderColor:'red',
 				cornerColor:'yellow',
@@ -4527,7 +4364,7 @@
 						logoCanvas.remove(o)
 					}
 				})
-				g.set("visible", true)
+				g.set("visible", $("#textLogoCheck").is(":checked"))
 				g.set("skewX", 0)
 				g.set("skewY", 0)
 				logoCanvas.renderAll();
@@ -4546,7 +4383,7 @@
 						logoCanvas.remove(o)
 					}
 				})
-				g.set("visible", true)
+				g.set("visible", $("#textLogoCheck").is(":checked"))
 				g.set("skewX", 0)
 				g.set("skewY", amount)
 				logoCanvas.renderAll();
@@ -4565,7 +4402,7 @@
 						logoCanvas.remove(o)
 					}
 				})
-				g.set("visible", true)
+				g.set("visible", $("#textLogoCheck").is(":checked"))
 				g.set("skewX", 0)
 				g.set("skewY", amount)
 				logoCanvas.renderAll();
@@ -4584,7 +4421,7 @@
 						logoCanvas.remove(o)
 					}
 				})
-				g.set("visible", true)
+				g.set("visible", $("#textLogoCheck").is(":checked"))
 				g.set("skewY", 0)
 				g.set("skewX", amount)
 				logoCanvas.renderAll();
@@ -4603,7 +4440,7 @@
 						logoCanvas.remove(o)
 					}
 				})
-				g.set("visible", true)
+				g.set("visible", $("#textLogoCheck").is(":checked"))
 				g.set("skewY", 0)
 				g.set("skewX", amount)
 				logoCanvas.renderAll();
@@ -5020,20 +4857,14 @@
 			$("#warpAmount").prop("disabled",true);
 		}
 		var id = $(this).data("id");
-		var objects = logoCanvas.getObjects();
-		for (x in objects) {
-			if (objects[x].id == id || objects[x].get('name') == "warpedText") {
-				if (state == true) {
-					if ($("#warpEffect").val() == "none" && objects[x].get('type') == "group") {
-						objects[x].set("visible",true)
-					} else if ($("#warpEffect").val() != "none" && objects[x].get('type') == "image") {
-						objects[x].set("visible",true)
-					}
-				} else {
-					objects[x].set("visible",false)
-				}
-			} 
+		let wt = logoCanvas.getObjects('image').find(o => o.id == "warpedText");
+		let wm = logoCanvas.getObjects('group').find(o => o.id == "wordmark")
+		if (wt != undefined) {
+			wt.set("visible", state)
+		} else {
+			wm.set("visible", state)
 		}
+
 		logoCanvas.renderAll();
 	})
 
@@ -5049,8 +4880,64 @@
 		//$("#uploadTheFont").click();
 	})
 
+	$("#localFontFolder").on("click",function() {
+        //showOverlay("Loading User Fonts...")
+		ipcRenderer.send('local-font-folder', null)
+	})
+
 	ipcRenderer.on('local-font-response', (event, response) => {
 		addFont(response)
+	})
+
+	ipcRenderer.on('local-font-folder-response', (event, data) => {
+		let fontErrors = []
+		if (data.result == 'success') {
+			let fontDropdown = document.getElementById("fontTypeCombo").msDropdown;
+
+			for (result of data.fonts) {
+				if (result.status == "ok") {
+					var thumb = null;
+					const name = result.fontName
+					const value = result.familyName
+					opentype.load(result.fontPath, (err,font) => {
+						if (err || !font) {
+							console.log(err)
+							return;
+						}
+						
+						var thumbText = font.getPath("ABC 123", 0, 0, 96)
+						var outPath = thumbText.toPathData(5)
+
+						thumbText = new fabric.Path(outPath, {
+							left: 0,
+							originX: 'center',
+							originY: 'center',
+							centeredScaling: true,
+							centeredRotation: true,
+							fill: 'black',
+							height: '80px'
+						})
+
+						thumb = thumbText.toDataURL()
+
+						if (findIndexByText(fontDropdown, name) == -1) {
+							fontDropdown.add({text:name, value:value, image:thumb},0)
+						}
+
+						sortFontDropdown()
+					})
+				} else {
+					fontErrors.push(result.fontName)
+				}
+			}
+		}
+		if (fontErrors.length > 0) {
+			var message = "The following fonts failed to import, and have been removed from your user fonts folder:\r\n\r\n"
+			for (font of fontErrors) {
+				message += font+"\r\n"
+			}
+			alert(message)
+		}
 	})
 
 	function addFont(data) {
@@ -5085,59 +4972,38 @@
             }
         }
     }
-	
 
-	/* $("#uploadTheFont").on("click", function(e) {
-		//$("#fontTypeCombo").removeClass().addClass('alegreya');
-		$.ajax({
-			type: "GET",
-			url: "http://127.0.0.1:"+port+"/customFont",
-			success: function(data) {
-				//console.log(data)
-				$("head").prepend("<style>@font-face {\n   font-family: '"+data.familyName+"';\n   src: url('"+data.fontData+"') format('truetype');\n}\n."+data.familyName+" { font-family: '"+data.familyName+"'; font-size: 1.1em;}\n</style>");
-				fontSources[data.familyName] = data.fontData;
-				console.log(fontSources)
-				var style = data.familyName;
-				var font_family = $("."+style).css("font-family");
-				var objects = logoCanvas.getObjects("group");
-				var myfont = new FontFaceObserver(data.familyName)
-				myfont.load()
-					.then(function() {
-					// when font is loaded, use it.
-							for (x in objects) {
-							if (objects[x].id == "wordmark") {
-								var tmp = objects[x].getObjects();
-								for (i in tmp) {
-									//console.log(tmp[i].fontFamily)
-									tmp[i].fontFamily = data.familyName;
-									//console.log(tmp[i].fontFamily)
-								}
-							}
-						}
-						logoCanvas.renderAll();
-						var optgroup = $("<optgroup class='"+data.familyName+"'>");
-						optgroup.append("<option value='"+data.familyName+"'>"+data.fontName+"</option>")
-						$("#fontTypeCombo").append(optgroup)
-						$("#fontTypeCombo").children().remove("optgroup[class='alegreya']");
-						//optgroup = $("<optgroup class='alegreya'>");
-						//optgroup.append("<option value='custom'>Custom Font</option>")
-						//$("#fontTypeCombo").append(optgroup)
-						$("#fontTypeCombo").val(data.familyName)
-						$("#fontTypeCombo").removeClass().addClass(data.familyName);
-						$("#fontTypeCombo").change()
-					}).catch(function(e) {
-						console.log(e)
-						alert('font loading failed ' + data.familyName);
-					});
-				
-				//wordmarkText.fontFamily = font_family;
-				//wordmarkTextStroke1.fontFamily = font_family;
-				//wordmarkTextStroke2.fontFamily = font_family;
-				//logoCanvas.renderAll();
-				//$(this).removeClass().addClass(style);
-			}
-		})
-	}) */
+	$("#dropContainer").on('dragover', function() {
+		$("#dropContainer").addClass('hover')
+		return false;
+	});
+
+	$("#dropContainer").on('dragleave', function() {
+		$("#dropContainer").removeClass('hover');
+		return false;
+	});
+
+	$("#dropContainer").on('drop', function(e) {
+		$("#dropContainer").removeClass('hover');
+		e.stopPropagation();
+		e.preventDefault();
+		var files = e.originalEvent.dataTransfer.files;
+		dropFile(files[0].path)
+		return false;
+	});
+
+	function dropFile(file) {
+        if ($.inArray(getExtension(file).toLowerCase(), validFontTypes) > -1) {
+            ipcRenderer.send('drop-font', file)
+        } else {
+            if ($.inArray(getExtension(file).toLowerCase(), validImageTypes) > -1) {
+                ipcRenderer.send('drop-image', file)
+            } else {
+                console.log("it's an invalid file")
+                return false;
+            }
+        }
+    }
 	
 	fabric.Canvas.prototype.getItemByID = function(name) {
 		var object = null,
@@ -5207,5 +5073,10 @@
 		}))
 		$("#fontTypeCombo").val(selectedFont)
     }
+
+	function getExtension(filename) {
+		var ext = (filename||'').split('.');
+		return ext[ext.length - 1];
+	}
 </script>
 </html>
