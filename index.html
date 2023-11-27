@@ -4898,7 +4898,7 @@
 				if (result.status == "ok") {
 					var thumb = null;
 					const name = result.fontName
-					const value = result.familyName
+					const value = result.fontPath
 					opentype.load(result.fontPath, (err,font) => {
 						if (err || !font) {
 							console.log(err)
