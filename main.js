@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, Menu, shell } = require('electron')
+const { app, BrowserWindow, dialog, Menu, shell, ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs');
 const express = require('express');
@@ -6,17 +6,39 @@ const Jimp = require('jimp');
 const imagemagickCli = require('imagemagick-cli');
 const { createSVGWindow } = require('svgdom')
 const window = createSVGWindow()
-const document = window.document
-const { SVG, registerWindow } = require('@svgdotjs/svg.js')
-const TextToSVG = require('text-to-svg');
-const ttfInfo = require('ttfinfo');
 const isMac = process.platform === 'darwin'
 const os = require('os');
 const tempDir = os.tmpdir()
 const url = require('url');
+const increment = require('add-filename-increment');
+const Store = require("electron-store")
+const fontname = require("fontname")
+const chokidar = require('chokidar')
+const font2base64 = require("node-font2base64")
+const hasbin = require('hasbin')
 
-const app2 = express()
-const port = 8082;
+const store = new Store();
+
+const userFontsFolder = path.join(app.getPath('userData'),"fonts")
+
+const imWarning = store.get("imWarning", true)
+
+if (!fs.existsSync(userFontsFolder)) {
+    fs.mkdirSync(userFontsFolder);
+}
+
+if (!fs.existsSync(userFontsFolder+"/README.txt")) {
+	var writeStream = fs.createWriteStream(userFontsFolder+"/README.txt");
+	writeStream.write("TTF and OTF fonts dropped into this folder will automatically be imported into the Sweater Factory!\r\n\r\nFonts removed from this folder will still be available in the Sweater Factory until you quit the app, and they will not reload after that.  Of course, that may cause sweaters that you load into the app to misbehave.")
+	writeStream.end()
+}
+
+const watcher = chokidar.watch(userFontsFolder, {
+	ignored: /(^|[\/\\])\../, // ignore dotfiles
+	persistent: true
+});
+
+watcher.on('ready', () => {})
 
 const fontArray = {
 	"Acme": "Acme-Regular.ttf",
@@ -75,101 +97,46 @@ const fontArray = {
 	"Yellowtail": "Yellowtail-Regular.ttf"
 };
 
-const template = [
-// { role: 'appMenu' }
-...(isMac ? [{
-	label: app.name,
-	submenu: [
-	{ role: 'about' },
-	{ type: 'separator' },
-	{ role: 'services' },
-	{ type: 'separator' },
-	{ role: 'hide' },
-	{ role: 'hideOthers' },
-	{ role: 'unhide' },
-	{ type: 'separator' },
-	{ role: 'quit' }
-	]
-}] : []),
-// { role: 'fileMenu' }
-{
-	label: 'File',
-	submenu: [
-	isMac ? { role: 'close' } : { role: 'quit' }
-	]
-},
-// { role: 'viewMenu' }
-{
-	label: 'View',
-	submenu: [
-	{ role: 'reload' },
-	{ role: 'forceReload' },
-	{ role: 'toggleDevTools' },
-	{ type: 'separator' },
-	{ role: 'resetZoom' },
-	{ role: 'zoomIn' },
-	{ role: 'zoomOut' },
-	{ type: 'separator' },
-	{ role: 'togglefullscreen' }
-	]
-},
-// { role: 'windowMenu' }
-{
-	label: 'Window',
-	submenu: [
-	{ role: 'minimize' },
-	{ role: 'zoom' },
-	...(isMac ? [
-		{ type: 'separator' },
-		{ role: 'front' },
-		{ type: 'separator' },
-		{ role: 'window' }
-	] : [
-		{ role: 'close' }
-	])
-	]
-},
-{
-	role: 'help',
-	submenu: [
-	{
-		label: 'About Franchise Hockey Manager',
-		click: async () => {    
-		await shell.openExternal('https://www.ootpdevelopments.com/franchise-hockey-manager-home/')
-		}
-	},
-	{
-		label: 'About Node.js',
-		click: async () => {    
-		await shell.openExternal('https://nodejs.org/en/about/')
-		}
-	},
-	{
-		label: 'About Electron',
-		click: async () => {
-		await shell.openExternal('https://electronjs.org')
-		}
-	},
-	{
-		label: 'View project on GitHub',
-		click: async () => {
-		await shell.openExternal('https://github.com/eriqjaffe/FHM-Sweater-Factory')
-		}
+const imInstalled = hasbin.sync('magick');
+
+ipcMain.on('imagemagick-warning', (event, arg) => {
+	if (!imInstalled) {
+		event.sender.send('hide-imagemagick', null)
+		if (imWarning) {
+			dialog.showMessageBox({
+				noLink: true,
+				type: 'info',
+				buttons: ['OK', 'Download'],
+				message: 'ImageMagick was not detected, some functionality will not be available.',
+				checkboxLabel: 'Don\'t warn me again',
+				checkboxChecked: false
+			}).then(result => {
+				if (result.checkboxChecked) {
+					store.set("imWarning", false)
+				} else {
+					store.set("imWarning", true)
+				}
+				if (result.response === 1) {
+					switch (process.platform) {
+						case "darwin":
+							shell.openExternal("https://imagemagick.org/script/download.php#macosx")
+							break;
+						case "linux":
+							shell.openExternal("https://imagemagick.org/script/download.php#linux")
+							break;
+						case "win32":
+							shell.openExternal("https://imagemagick.org/script/download.php#windows")
+							break;
+					}
+					app.quit()
+				} 
+			})	
+		} 
 	}
-	]
-}
-]
+})
 
-const menu = Menu.buildFromTemplate(template)
-Menu.setApplicationMenu(menu)
-
-const server = app2.listen(0, () => {
-	console.log(`Server running on port ${server.address().port}`);
-});
-
-app2.use(express.urlencoded({limit: '50mb', extended: true, parameterLimit: 50000}));
-
-app2.get("/uploadImage", (req, res) => {
+ipcMain.on('upload-image', (event, arg) => {
+	let json = {}
 	dialog.showOpenDialog(null, {
 		properties: ['openFile'],
 		filters: [
@@ -182,11 +149,11 @@ app2.get("/uploadImage", (req, res) => {
 					console.log(err);
 				} else {
 					image.getBase64(Jimp.AUTO, (err, ret) => {
-						res.json({
-							"filename": path.basename(result.filePaths[0]),
-							"image": ret
-						  });
-						res.end();
+						json.filename = path.basename(result.filePaths[0]),
+						json.image = ret;
+						json.path = result.filePaths[0]
+						event.sender.send('upload-image-response', json)
+						//res.end();
 					})
 				}
 			});
@@ -196,17 +163,109 @@ app2.get("/uploadImage", (req, res) => {
 	  })
 })
 
-app2.post('/saveJersey', (req, res) => {
-	var buffer = Buffer.from(req.body.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
+ipcMain.on('local-font', (event, arg) => {
+	let json = {}
+	const options = {
+		defaultPath: store.get("uploadFontPath", app.getPath('desktop')),
+		properties: ['openFile'],
+		filters: [
+			{ name: 'Fonts', extensions: ['ttf', 'otf'] }
+		]
+	}
+	dialog.showOpenDialog(null, options).then(result => {
+		if(!result.canceled) {
+			store.set("uploadFontPath", path.dirname(result.filePaths[0]))
+			const filePath = path.join(userFontsFolder,path.basename(result.filePaths[0]))
+			try {
+				const fontMeta = fontname.parse(fs.readFileSync(result.filePaths[0]))[0];
+				var ext = getExtension(result.filePaths[0])
+				var fontPath = url.pathToFileURL(result.filePaths[0])
+				json.status = "ok"
+				json.fontName = fontMeta.fullName
+				json.fontStyle = fontMeta.fontSubfamily
+				json.familyName = fontMeta.fontFamily
+				json.fontFormat = ext
+				json.fontMimetype = 'font/' + ext
+				json.fontData = fontPath.href
+				json.fontPath = filePath
+				json.type = arg
+				fs.copyFileSync(result.filePaths[0], filePath)
+				event.sender.send('local-font-response', json)
+			} catch (err) {
+				json.status = "error"
+				json.fontName = path.basename(result.filePaths[0])
+				json.fontPath = result.filePaths[0]
+				json.message = err
+				event.sender.send('local-font-response', json)
+				fs.unlinkSync(result.filePaths[0])
+			}
+		} else {
+			json.status = "cancelled"
+			event.sender.send('local-font-response', json)
+			console.log("cancelled")
+		}
+	}).catch(err => {
+		console.log(err)
+		json.status = "error",
+		json.message = err
+		event.sender.send('local-font-response', json)
+	})
+})
+
+ipcMain.on('local-font-folder', (event, arg) => {
+	const jsonObj = {}
+	const jsonArr = []
+
+	filenames = fs.readdirSync(userFontsFolder);
+	for (i=0; i<filenames.length; i++) {
+        if (path.extname(filenames[i]).toLowerCase() == ".ttf" || path.extname(filenames[i]).toLowerCase() == ".otf") {
+			const filePath = path.join(userFontsFolder,filenames[i])
+			try {
+				const fontMeta = fontname.parse(fs.readFileSync(filePath))[0];
+				var ext = getExtension(filePath)
+				const dataUrl = font2base64.encodeToDataUrlSync(filePath)
+				var fontPath = url.pathToFileURL(filePath)
+				var json = {
+					"status": "ok",
+					"fontName": fontMeta.fullName,
+					"fontStyle": fontMeta.fontSubfamily,
+					"familyName": fontMeta.fontFamily,
+					"fontFormat": ext,
+					"fontMimetype": 'font/' + ext,
+					"fontData": fontPath.href,
+					"fontBase64": dataUrl,
+					"fontPath": filePath,
+				};
+				jsonArr.push(json)
+			} catch (err) {
+				const json = {
+					"status": "error",
+					"fontName": path.basename(filePath),
+					"fontPath": filePath,
+					"message": err
+				}
+				jsonArr.push(json)
+				//fs.unlinkSync(filePath)
+			}
+		}
+	}
+	jsonObj.result = "success"
+	jsonObj.fonts = jsonArr
+	event.sender.send('local-font-folder-response', jsonObj)
+})
+
+ipcMain.on('save-sweater', (event, arg) => {
+	var buffer = Buffer.from(arg.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
 
 	const options = {
-		defaultPath: app.getPath('desktop') + '/' + req.body.name,
+		defaultPath: increment(store.get("downloadPath", app.getPath('downloads')) + '/' + arg.name+'.png',{fs: true})
 	}
 
 	dialog.showSaveDialog(null, options).then((result) => {
 		if (!result.canceled) {
 			Jimp.read(buffer, (err, fir_img) => {
 			if(err) {
+				event.sender.send('hide-overlay',null)
 				console.log(err);
 			} else {
 				var watermark = fs.readFileSync(__dirname + "/images/fhm_watermark.png", {encoding: 'base64'});
@@ -219,37 +278,43 @@ app2.post('/saveJersey', (req, res) => {
 							fir_img.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
 								const finalImage = Buffer.from(buffer).toString('base64');
 								fs.writeFile(result.filePath, finalImage, 'base64', function(err) {
+									event.sender.send('hide-overlay',null)
 									console.log(err);
-								});
+								});		
 							  });
-							
 						}
 					})
 				}
 			});
-		} 
+			event.sender.send('hide-overlay',null)
+		} else {
+			event.sender.send('hide-overlay',null)
+		}
 	}).catch((err) => {
+		event.sender.send('hide-overlay',null)
 		console.log(err);
 	});
-});
+})
 
-app2.post('/warpText', (req, res)=> {
-	var buffer = Buffer.from(req.body.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
-	var amount = req.body.amount;
-	var deform = req.body.deform;
-	var width;
-	var height;
-	var cmdLine;
-	console.log(req.body.deform)
+ipcMain.on('warp-text', (event, arg) => {
+	let buffer = Buffer.from(arg.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
+	let amount = arg.amount;
+	let deform = arg.deform;
+	let width;
+	let height;
+	let cmdLine;
+	let json = {}
 	Jimp.read(buffer, (err, image) => {
 		if (err) {
+			json.status = 'error'
+			json.message = err
 			console.log(err);
+			event.sender.send('warp-text-response', json)
 		} else {
 			image.autocrop();
 			image.write(tempDir+"/temp.png");
 			width = image.bitmap.width;
 			height = image.bitmap.height;
-			console.log(width +'x'+height)
 			switch (deform) {
 				case "arch":
 					cmdLine = 'magick convert -background transparent -wave -'+amount+'x'+width*2+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png'
@@ -258,355 +323,163 @@ app2.post('/warpText', (req, res)=> {
 					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel Background -background transparent -distort Arc '+amount+' -trim +repage '+tempDir+'/'+deform+'.png'
 					break;
 				case "bilinearUp":
-					console.log(amount)
-					console.log(((100-amount)*0.01));
 					var y2=height*((100-amount)*0.01)
 					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+height+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+y2+'" '+tempDir+'/'+deform+'.png'
 					break;
 				case "bilinearDown":
-					console.log(amount)
-					console.log(((100-amount)*0.01));
 					var y2=height*((100-amount)*0.01)
 					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+y2+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+height+'" '+tempDir+'/'+deform+'.png'
 					break;
 				case "archUp":
-					imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity west -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
-						imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
-							Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
-								if (err) {
-									console.log(err);
-								} else {
-									image.getBase64(Jimp.AUTO, (err, ret) => {
-										res.end(ret);
-									})
-								}
+					try {
+						imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity west -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
+							imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
+								Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
+									if (err) {
+										json.status = 'error'
+										json.message = err
+										console.log(err);
+										event.sender.send('warp-text-response', json)
+									} else {
+										image.getBase64(Jimp.AUTO, (err, ret) => {
+											json.status = 'success'
+											json.data = ret
+											event.sender.send('warp-text-response', json)
+											//res.end(ret);
+										})
+									}
+								})
 							})
 						})
-					})
+					} catch (err) {
+						json.status = 'error'
+						json.message = err
+						console.log(err);
+						event.sender.send('warp-text-response', json)
+					}
 					break;
 				case "archDown":
-					imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity east -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
-						imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
-							Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
-								if (err) {
-									console.log(err);
-								} else {
-									image.getBase64(Jimp.AUTO, (err, ret) => {
-										res.end(ret);
-									})
-								}
+					try {
+						imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity east -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
+							imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
+								Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
+									if (err) {
+										json.status = 'error'
+										json.message = err
+										console.log(err);
+										event.sender.send('warp-text-response', json)
+									} else {
+										image.getBase64(Jimp.AUTO, (err, ret) => {
+											json.status = 'success'
+											json.data = ret
+											event.sender.send('warp-text-response', json)
+										})
+									}
+								})
 							})
 						})
-					})
+					} catch (err) {
+						json.status = 'error'
+						json.message = err
+						console.log(err);
+						event.sender.send('warp-text-response', json)
+					}
 					break;
 				default:
 					image.getBase64(Jimp.AUTO, (err, ret) => {
-						res.end(ret);
+						json.status = 'success'
+						json.data = ret
+						event.sender.send('warp-text-response', json)
 					})
 					break;
 			}
-			console.log(cmdLine);
-			imagemagickCli.exec(cmdLine).then(({ stdout, stderr }) => {
-				Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
-					if (err) {
-						console.log(err);
-					} else {
-						image.getBase64(Jimp.AUTO, (err, ret) => {
-							res.end(ret);
-						})
-					}
+			try {
+				imagemagickCli.exec(cmdLine).then(({ stdout, stderr }) => {
+					Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
+						if (err) {
+							json.status = 'error'
+							json.message = err
+							console.log(err);
+							event.sender.send('warp-text-response', json)
+						} else {
+							image.getBase64(Jimp.AUTO, (err, ret) => {
+								json.status = 'success'
+								json.data = ret
+								event.sender.send('warp-text-response', json)
+							})
+						}
+					})
 				})
-			})
+			} catch (err) {
+				json.status = 'error'
+				json.message = err
+				console.log(err);
+				event.sender.send('warp-text-response', json)
+			}
 		}
 	})
 })
 
-app2.post('/archText', (req, res) => {
-	console.log(req.body)
-	var text = req.body.text;
-	var fill = req.body.fill;
-	var stroke1 = req.body.stroke1Color;
-	var stroke2 = req.body.stroke2Color;
-	var font = fontArray[req.body.font];
-	var size = req.body.size;
-	var stroke1Visible = (req.body.stroke1Visible === 'true');
-	var stroke2Visible = (req.body.stroke2Visible === 'true');
-	var fillVisible = (req.body.fillVisible === 'true');
-	var svg2, svg1, svg, attributes, options, doc, path, base_d, s1path, s2path, fillPath, p
-
-	registerWindow(window, document)
-
-	const canvas = SVG(document.documentElement).size(512, 512)
-
-	canvas.clear()
-
-	var textToSVG = TextToSVG.loadSync('./fonts/'+font);
-
-	if (stroke2Visible) {
-		attributes = {fill: stroke2, stroke: stroke2, 'stroke-width': '10', id: 'stroke2'};
-		options = {x: 30, y: 30, fontSize: size, anchor: 'top', attributes: attributes};
-		svg2 = textToSVG.getPath(text, options);
-		canvas.svg(svg2)
-			}
-	
-	if (stroke1Visible) {
-		attributes = {fill: stroke1, stroke: stroke1, 'stroke-width': '6', id: 'stroke1'};
-		options = {x: 30, y: 30, fontSize: size, anchor: 'top', attributes: attributes};
-		svg1 = textToSVG.getPath(text, options);
-		canvas.svg(svg1)
-	}
-	
-	if (fillVisible) {
-		attributes = {fill: fill, id: 'fill'};
-		options = {x: 30, y: 30, fontSize: size, anchor: 'top', attributes: attributes};
-		svg = textToSVG.getPath(text, options);
-		canvas.svg(svg)
-	}
-
-	s2path = document.getElementById('stroke2');
-	base_d = s2path.getAttribute('d');
-	p = new Path(base_d);
-	p.warp({
-		type: 'WARP_ARCH',
-		bend : 15
-	});
-	s2path.setAttribute('d', p.output());
-
-	s1path = document.getElementById('stroke1');
-	base_d = s1path.getAttribute('d');
-	p = new Path(base_d);
-	p.warp({
-		type: 'WARP_ARCH',
-		bend : 15
-	});
-	s2path.setAttribute('d', p.output());
-
-	fillPath = document.getElementById('fill');
-	base_d = fillPath.getAttribute('d');
-	p = new Path(base_d);
-	p.warp({
-		type: 'WARP_ARCH',
-		bend : 15
-	});
-	fillPath.setAttribute('d', p.output());
-
-	console.log(canvas.svg())
-
-	
-
-	/* var font_format = 'woff2'; // best compression
-	var font_mimetype = 'font/' + font_format;
-	var buff = fs.readFileSync(__dirname+'\\fonts\\'+font);
-	var font_data = 'data:'+font_mimetype+';charset=ascii;base64,' + buff.toString('base64')
-
-	registerWindow(window, document)
-
-	const canvas = SVG(document.documentElement).size(512, 512)
-
-	canvas.clear()
-
-	canvas.defs().element('style').words(
-		"@font-face {" +
-		"  font-family: '"+req.body.font+"';" +
-		"  src: url('"+font_data+"')" +
-		"    format('"+font_format+"')" +
-		"  ;" +
-		"}"
-	)
-
-	var group = canvas.group();
-
-	if (stroke2Visible) {
-		var chars = group.text(text).font({
-			size: size*1.25,
-			fill: stroke2,
-			family: req.body.font
-		})
-		chars.x(20)
-		chars.y(20)
-		chars.stroke({ color: stroke2, width: 10 })
-	}
-
-	if (stroke1Visible) {
-		var chars = group.text(text).font({
-			size: size*1.25,
-			fill: stroke1,
-			family: req.body.font
-		})
-		chars.x(20)
-		chars.y(20)
-		chars.stroke({ color: stroke1, width: 6 })
-	}
-
-	if (fillVisible) {
-		var chars = group.text(text).font({
-			size: size*1.25,
-			fill: fill,
-			family: req.body.font
-		})
-		chars.x(20)
-		chars.y(20)
-	}
-
-
-
-	canvas.height(group.bbox().height+20);
-	canvas.width(group.bbox().width+20)
-	
-	console.log(canvas.svg())
-	var buff2 = Buffer.from(canvas.svg());
-	res.end('data:image/svg+xml;base64,'+buff2.toString('base64')) */
-})
-
-app2.post('/jitterText', (req, res) => {
-	console.log(req.body)
-	var text = req.body.text;
-	var diag = text.split("");
-	var fill = req.body.fill;
-	var stroke1 = req.body.stroke1Color;
-	var stroke2 = req.body.stroke2Color;
-	var font = fontArray[req.body.font];
-	var size = req.body.size;
-	var h = parseInt(req.body.hSpacing);
-	var v = parseInt(req.body.vSpacing);
-	var stroke1Visible = (req.body.stroke1Visible === 'true');
-	var stroke2Visible = (req.body.stroke2Visible === 'true');
-	var fillVisible = (req.body.fillVisible === 'true');
-	var x = 10;
-	var y = 10;
-	var cmd;
-
-	var font_name = 'custom';
-	var font_format = 'woff2'; // best compression
-	var font_mimetype = 'font/ttf';
-	if (req.body.font.substring(0,5) === "file:") {
-		var buff = fs.readFileSync(url.fileURLToPath(req.body.font));
-	} else {
-		var buff = fs.readFileSync(__dirname+'\\fonts\\'+req.body.font);
-	}
-	var font_data = 'data:'+font_mimetype+';charset=ascii;base64,' + buff.toString('base64')
-
-	registerWindow(window, document)
-
-	const canvas = SVG(document.documentElement).size(2048, 2048)
-
-	canvas.clear()
-
-	canvas.defs().element('style').words(
-		"@font-face {" +
-		"  font-family: 'temp';" +
-		"  src: url('"+font_data+"')" +
-		"    format('"+font_format+"')" +
-		"  ;" +
-		"}"
-	)
-
-	var group = canvas.group();
-
-	if (stroke2Visible) {
-		for (var i=0; i<diag.length; i++) {
-			var text = group.text(diag[i]).font({
-				size: size*2,
-				fill: stroke2,
-				family: 'temp'
+ipcMain.on('drop-image', (event, arg) => {
+    let json = {}
+	Jimp.read(arg, (err, image) => {
+		if (err) {
+			json.filename = "error not an image"
+			json.image = "error not an image"
+			event.sender.send('upload-image-response', json)
+		} else {
+			image.getBase64(Jimp.AUTO, (err, ret) => {
+				json.path = arg
+				json.filename = path.basename(arg)
+				json.image = ret
+				//json.palette = palette
+				event.sender.send('upload-image-response', json)
 			})
-			text.x(x)
-			text.y(y)
-			text.stroke({ color: stroke2, width: 10 })
-			x += h*2;
-			y += v*2;
 		}
-	}
-	x = 10;
-	y = 10;
-
-	if (stroke1Visible) {
-		for (var i=0; i<diag.length; i++) {
-			var text = group.text(diag[i])
-			text.font({
-				size: size*2,
-				fill: stroke1,
-				family: 'temp'
-			})
-			text.x(x)
-			text.y(y)
-			text.stroke({ color: stroke1, width: 6 })
-			x += h*2;
-			y += v*2;
-		}
-	}
-	x = 10;
-	y = 10;
-
-	if (fillVisible) {
-		for (var i=0; i<diag.length; i++) {
-			var text = group.text(diag[i])
-			text.font({
-				size: size*2,
-				fill: fill,
-				family: 'temp'
-			})
-			text.x(x)
-			text.y(y)
-			x += h*2;
-			y += v*2;
-		}
-	}
-	group.x(10)
-	group.y(10)
-	canvas.height(group.bbox().height+20);
-	canvas.width(group.bbox().width+20)
-	var buff2 = Buffer.from(canvas.svg());
-	res.end('data:image/svg+xml;base64,'+buff2.toString('base64'))
-})
-
-app2.get("/customFont", (req, res) => {
-	dialog.showOpenDialog(null, {
-		properties: ['openFile'],
-		filters: [
-			{ name: 'Fonts', extensions: ['ttf', 'otf'] }
-		]
-	}).then(result => {
-		if(!result.canceled) {
-			ttfInfo(result.filePaths[0], function(err, info) {
-			var ext = getExtension(result.filePaths[0])
-				//var buff = fs.readFileSync(result.filePaths[0]);
-				//console.log(tempDir)
-				var fontPath = url.pathToFileURL(tempDir + '/'+path.basename(result.filePaths[0]))
-				//console.log(fontPath.href)
-				fs.copyFile(result.filePaths[0], tempDir + '/'+path.basename(result.filePaths[0]), (err) => {
-				//fs.copyFile(result.filePaths[0], path.join(app.getAppPath(), 'resources', 'app', 'fonts', path.basename(result.filePaths[0])), (err) => {
-					if (err) {
-						console.log(err)
-					} else {
-						res.json({
-							"fontName": info.tables.name[1],
-							"fontStyle": info.tables.name[2],
-							"familyName": info.tables.name[6],
-							"fontFormat": ext,
-							"fontMimetype": 'font/' + ext,
-							"fontData": fontPath.href
-						});
-						res.end()
-					}
-				})
-				/* fs.writeFile(__dirname + '/fonts/'+path.basename(result.filePaths[0]), buff, function (err) {
-					if (err) return console.log(err);
-					res.json({
-						"fontName": info.tables.name[1],
-						"fontStyle": info.tables.name[2],
-						"familyName": info.tables.name[6],
-						"fontFormat": ext,
-						"fontMimetype": 'font/' + ext,
-						"fontData": 'data:'+'font/' + ext+';charset=ascii;base64,' + buff.toString('base64')
-					});
-				  });
-				
-			res.end() */
-			});
-		}
-	}).catch(err => {
+	})
+	.catch(err => { 
 		console.log(err)
+		json.filename = "error not an image"
+		json.image = "error not an image"
+		event.sender.send('upload-image-response', err) 
+	})		
+})
+
+ipcMain.on('drop-font', (event, arg) => {
+    let json = {}
+    try {
+		const filePath = path.join(userFontsFolder,path.basename(arg))
+		const fontMeta = fontname.parse(fs.readFileSync(arg))[0];
+		var ext = getExtension(arg)
+		var fontPath = url.pathToFileURL(arg)
+		json = {
+			"status": "ok",
+			"fontName": fontMeta.fullName,
+			"fontStyle": fontMeta.fontSubfamily,
+			"familyName": fontMeta.fontFamily,
+			"fontFormat": ext,
+			"fontMimetype": 'font/' + ext,
+			"fontData": fontPath.href,
+			"fontPath": filePath
+		};
+		fs.copyFileSync(arg, filePath)
+		event.sender.send('local-font-response', json)
+	} catch (err) {
+		json = {
+			"status": "error",
+			"fontName": path.basename(arg),
+			"fontPath": arg,
+			"message": err
+		}
+		event.sender.send('local-font-response', json)
+		//fs.unlinkSync(req.query.file)
+	}
+})
+
+ipcMain.on('show-alert', (event, arg) => {
+	dialog.showMessageBox(null, {
+		type: 'info',
+		message: arg
 	})
 })
 
@@ -622,17 +495,140 @@ const createWindow = () => {
       height: 760,
 	  icon: (__dirname + '/images/sweater.png'),
       webPreferences: {
-        //preload: path.join(__dirname, 'preload.js')
-      }
+		nodeIntegration: true,
+		contextIsolation: false
+	  }
     })
+
+	const template = [
+		// { role: 'appMenu' }
+		...(isMac ? [{
+			label: app.name,
+			submenu: [
+			{ role: 'about' },
+			{ type: 'separator' },
+			{ role: 'services' },
+			{ type: 'separator' },
+			{ role: 'hide' },
+			{ role: 'hideOthers' },
+			{ role: 'unhide' },
+			{ type: 'separator' },
+			{ role: 'quit' }
+			]
+		}] : []),
+		// { role: 'fileMenu' }
+		{
+			label: 'File',
+			submenu: [
+				{
+					click: () => mainWindow.webContents.send('save','click'),
+					accelerator: isMac ? 'Cmd+S' : 'Control+S',
+					label: 'Save Sweater',
+				},
+				{
+				  click: () => mainWindow.webContents.send('import-image','click'),
+				  accelerator: isMac ? 'Cmd+I' : 'Control+I',
+				  label: 'Import Image',
+				},
+				{
+				  click: () => mainWindow.webContents.send('import-font','click'),
+				  accelerator: isMac ? 'Cmd+F' : 'Control+F',
+				  label: 'Import Font',
+				},
+				
+				{ type: 'separator' },
+				isMac ? { role: 'close' } : { role: 'quit' }
+			]
+		},
+		// { role: 'viewMenu' }
+		{
+			label: 'View',
+			submenu: [
+			{ role: 'reload' },
+			{ role: 'forceReload' },
+			{ role: 'toggleDevTools' },
+			{ type: 'separator' },
+			{ role: 'resetZoom' },
+			{ role: 'zoomIn' },
+			{ role: 'zoomOut' },
+			{ type: 'separator' },
+			{ role: 'togglefullscreen' }
+			]
+		},
+		{
+			label: 'Window',
+			submenu: [
+			{ role: 'minimize' },
+			{ role: 'zoom' },
+			...(isMac ? [
+				{ type: 'separator' },
+				{ role: 'front' },
+				{ type: 'separator' },
+				{ role: 'window' }
+			] : [
+				{ role: 'close' }
+			])
+			]
+		},
+		{
+			role: 'help',
+			submenu: [
+				{
+					click: () => mainWindow.webContents.send('about','click'),
+						label: 'About the FHM Sweater Factory',
+				},
+				{
+					label: 'About Franchise Hockey Manager',
+					click: async () => {    
+					await shell.openExternal('https://www.ootpdevelopments.com/franchise-hockey-manager-home/')
+					}
+				},
+				{
+					label: 'About Node.js',
+					click: async () => {    
+					await shell.openExternal('https://nodejs.org/en/about/')
+					}
+				},
+				{
+					label: 'About Electron',
+					click: async () => {
+					await shell.openExternal('https://electronjs.org')
+					}
+				},
+				{
+					label: 'About Fabric.js',
+					click: async () => {
+					await shell.openExternal('http://fabricjs.com/')
+					}
+				},
+				{
+					label: 'View project on GitHub',
+					click: async () => {
+					await shell.openExternal('https://github.com/eriqjaffe/FHM-Sweater-Factory')
+					}
+				}
+			]
+		}
+	]
+
+	const menu = Menu.buildFromTemplate(template)
+	Menu.setApplicationMenu(menu)
+
+	watcher.on('add', (path, stats) => {
+		mainWindow.webContents.send('updateFonts','click')
+	})
   
     // and load the index.html of the app.
-    mainWindow.loadURL(`file://${__dirname}/index.html?port=${server.address().port}`);
+    mainWindow.loadURL(`file://${__dirname}/index.html`);
 
 	mainWindow.webContents.on('new-window', function(e, url) {
 		e.preventDefault();
 		require('electron').shell.openExternal(url);
 	});
+
+	// Open the DevTools.
+    mainWindow.maximize()
+    mainWindow.webContents.openDevTools()
   
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
