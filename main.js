@@ -528,6 +528,13 @@ ipcMain.on('drop-font', (event, arg) => {
 	}
 })
 
+ipcMain.on('show-alert', (event, arg) => {
+	dialog.showMessageBox(null, {
+		type: 'info',
+		message: arg
+	})
+})
+
 function getExtension(filename) {
 	var ext = path.extname(filename||'').split('.');
 	return ext[ext.length - 1];

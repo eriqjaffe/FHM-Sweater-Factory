@@ -2296,7 +2296,7 @@
 		var yearRange = "";
 		var teamName = "";
 		if (startYear > endYear && endYear > 0) {
-			alert("The start year has to be before or equal to the end year!");
+			ipcRenderer.send('show-alert',"The start year has to be before or equal to the end year!");
 			return false;
 		}
 		if (startYear == endYear && startYear > 0) {
@@ -4680,7 +4680,7 @@
 
 	ipcRenderer.on('warp-text-response', (event, response) => {
 		if (response.status == "error") {
-			alert(response.message)
+			ipcRenderer.send('show-alert',response.message)
 			hideOverlay()
 		} else {
 			let data = response.data
@@ -4946,16 +4946,16 @@
 			for (font of fontErrors) {
 				message += font+"\r\n"
 			}
-			alert(message)
+			ipcRenderer.send('show-alert',message)
 		}
 	})
 
 	function addFont(data) {
         if (data.result == "error") {
-            alert("An error occurred:\r\n\r\n"+data.message)
+            ipcRenderer.send('show-alert',"An error occurred:\r\n\r\n"+data.message)
             return false;
         } else if (data.status == "error") {
-            alert("The font '"+data.fontName+"' could not be loaded.")
+            ipcRenderer.send('show-alert',"The font '"+data.fontName+"' could not be loaded.")
             return false;
         } else {
             if (fontList.includes(data.fontName)) {
