@@ -15,10 +15,13 @@ const Store = require("electron-store")
 const fontname = require("fontname")
 const chokidar = require('chokidar')
 const font2base64 = require("node-font2base64")
+const hasbin = require('hasbin')
 
 const store = new Store();
 
 const userFontsFolder = path.join(app.getPath('userData'),"fonts")
+
+const imWarning = store.get("imWarning", true)
 
 if (!fs.existsSync(userFontsFolder)) {
     fs.mkdirSync(userFontsFolder);
@@ -94,98 +97,43 @@ const fontArray = {
 	"Yellowtail": "Yellowtail-Regular.ttf"
 };
 
-/* const template = [
-// { role: 'appMenu' }
-...(isMac ? [{
-	label: app.name,
-	submenu: [
-	{ role: 'about' },
-	{ type: 'separator' },
-	{ role: 'services' },
-	{ type: 'separator' },
-	{ role: 'hide' },
-	{ role: 'hideOthers' },
-	{ role: 'unhide' },
-	{ type: 'separator' },
-	{ role: 'quit' }
-	]
-}] : []),
-// { role: 'fileMenu' }
-{
-	label: 'File',
-	submenu: [
-		{
-			click: () => mainWindow.webContents.send('save-uniform','click'),
-			accelerator: isMac ? 'Cmd+S' : 'Control+S',
-			label: 'Save Uniform',
-		},
-		{ type: 'separator' },
-		isMac ? { role: 'close' } : { role: 'quit' }
-	]
-},
-// { role: 'viewMenu' }
-{
-	label: 'View',
-	submenu: [
-	{ role: 'reload' },
-	{ role: 'forceReload' },
-	{ role: 'toggleDevTools' },
-	{ type: 'separator' },
-	{ role: 'resetZoom' },
-	{ role: 'zoomIn' },
-	{ role: 'zoomOut' },
-	{ type: 'separator' },
-	{ role: 'togglefullscreen' }
-	]
-},
-// { role: 'windowMenu' }
-{
-	label: 'Window',
-	submenu: [
-	{ role: 'minimize' },
-	{ role: 'zoom' },
-	...(isMac ? [
-		{ type: 'separator' },
-		{ role: 'front' },
-		{ type: 'separator' },
-		{ role: 'window' }
-	] : [
-		{ role: 'close' }
-	])
-	]
-},
-{
-	role: 'help',
-	submenu: [
-	{
-		label: 'About Franchise Hockey Manager',
-		click: async () => {    
-		await shell.openExternal('https://www.ootpdevelopments.com/franchise-hockey-manager-home/')
-		}
-	},
-	{
-		label: 'About Node.js',
-		click: async () => {    
-		await shell.openExternal('https://nodejs.org/en/about/')
-		}
-	},
-	{
-		label: 'About Electron',
-		click: async () => {
-		await shell.openExternal('https://electronjs.org')
-		}
-	},
-	{
-		label: 'View project on GitHub',
-		click: async () => {
-		await shell.openExternal('https://github.com/eriqjaffe/FHM-Sweater-Factory')
-		}
+const imInstalled = hasbin.sync('magick');
+
+ipcMain.on('imagemagick-warning', (event, arg) => {
+	if (!imInstalled) {
+		event.sender.send('hide-imagemagick', null)
+		if (imWarning) {
+			dialog.showMessageBox({
+				noLink: true,
+				type: 'info',
+				buttons: ['OK', 'Download'],
+				message: 'ImageMagick was not detected, some functionality will not be available.',
+				checkboxLabel: 'Don\'t warn me again',
+				checkboxChecked: false
+			}).then(result => {
+				if (result.checkboxChecked) {
+					store.set("imWarning", false)
+				} else {
+					store.set("imWarning", true)
+				}
+				if (result.response === 1) {
+					switch (process.platform) {
+						case "darwin":
+							shell.openExternal("https://imagemagick.org/script/download.php#macosx")
+							break;
+						case "linux":
+							shell.openExternal("https://imagemagick.org/script/download.php#linux")
+							break;
+						case "win32":
+							shell.openExternal("https://imagemagick.org/script/download.php#windows")
+							break;
+					}
+					app.quit()
+				} 
+			})	
+		} 
 	}
-	]
-}
-] */
-
-
+})
 
 ipcMain.on('upload-image', (event, arg) => {
 	let json = {}

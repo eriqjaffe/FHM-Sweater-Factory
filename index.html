@@ -466,9 +466,10 @@
 											<input type="button" id="makeCrest" class="button" value="Make Crest">
 											<input type="button" class="button makePatch" data-sleeve="left" value="Make Left Patch">
 											<input type="button" class="button makePatch" data-sleeve="right" value="Make Right Patch">
+											<input type="button" class="button" id="straightenObject" value="Reset Object Rotation">
 										</td>
 									</tr>
-									<tr>
+									<tr class="imagemagick">
 										<td><center>
 											<input type="button" id="colorSquare" class="colorSquare" value="Click To Choose Color" style="margin-right:10px;"><span id="chosenCoordinates" style="margin-right:5px;"></span>
 											Fuzz %:
@@ -476,7 +477,7 @@
 											<span id="fuzzAmount">40</span>%
 										</td>
 									</tr>
-									<tr>
+									<tr class="imagemagick">
 										<td><center>
 											<input type="button" class="button" id="border" value="Remove Border">
 											<input type="button" class="button removeColor" id="removeColorRange" value="Remove Section" data-x="0" data-y="0">
@@ -518,16 +519,16 @@
 									<td style="width:20%;">
 										<select id="warpEffect" class="textOption" style="width:100%;" is="ms-dropdown" data-visible-rows="8">
 											<option value="none" data-image="./images/none.png"></option>
-											<option value="arch" data-value="15" data-image="./images/arched.png"></option>
-											<option value="arc" data-value="70" data-image="./images/arced.png"></option>
+											<option class="imagemagick" value="arch" data-value="15" data-image="./images/arched.png"></option>
+											<optionclass="imagemagick"  value="arc" data-value="70" data-image="./images/arced.png"></option>
 											<option value="skewUp" data-value="25" data-image="./images/skewup.png"></option>
 											<option value="skewDown" data-value="25" data-image="./images/skewdown.png"></option>
 											<option value="skewLeft" data-value="25" data-image="./images/skewleft.png"></option>
 											<option value="skewRight" data-value="25" data-image="./images/skewright.png"></option>
-											<option value="bilinearUp" data-value="40" data-image="./images/angleup.png"></option>
-											<option value="bilinearDown" data-value="40" data-image="./images/angledown.png"></option>
-											<option value="archUp" data-value="15" data-image="./images/archup.png"></option>
-											<option value="archDown" data-value="15" data-image="./images/archdown.png"></option>
+											<option class="imagemagick" value="bilinearUp" data-value="40" data-image="./images/angleup.png"></option>
+											<option class="imagemagick" value="bilinearDown" data-value="40" data-image="./images/angledown.png"></option>
+											<option class="imagemagick" value="archUp" data-value="15" data-image="./images/archup.png"></option>
+											<option class="imagemagick" value="archDown" data-value="15" data-image="./images/archdown.png"></option>
 											<option value="diagonalText" data-value="15" data-image="./images/diag.png"></option>
 											<!--<option value="sandbox" data-value="15" data-image="./images/warpTBD.png"></option>-->
 										</select>
@@ -636,7 +637,6 @@
 						</div>
 					</div>
 					<div style="text-align:center; margin-top:5px;">
-						<input type="button" class="button" id="straightenObject" value="Reset Object Rotation" style="display:none;">
 						<input type="button" class="button" id="save" value="Save Sweater">
 						<!--<input type="button" class="button" id="zip" value="Zip Sweater">-->
 						<!--<input type="button" class="button" id="imgur" value="Upload To Imgur">-->
@@ -666,6 +666,12 @@
 </div>
 </body>
 <script>
+	ipcRenderer.on('hide-imagemagick', (event, arg) => {
+		$(".imagemagick").each(function() {
+			$(this).css("display","none");
+		})
+	})
+
 	var spinnerOptions = {lines: 13, length: 28, width: 14, radius: 42, scale: 2, corners: 1, color: '#4283C7', opacity: 0.25, rotate: 0, direction: 1, speed: 1, trail: 60, fps: 20, zIndex: 2e9, className: 'spinner', top: '50%', left: '50%', shadow: false, hwaccel: false, position: 'absolute'}
     var target = document.getElementById('overlay');
     var spinner = new Spinner(spinnerOptions).spin(target);
@@ -822,6 +828,7 @@
 
 		sortFontDropdown()
 
+		ipcRenderer.send('imagemagick-warning', null)
 	});
 	
 	$("#colorFormat").on("change",function(e) {
@@ -1923,8 +1930,6 @@
 		palette: [ ],
 		color: "#FF0000"
 	})
-
-
 	
 	$("#fakeImageButton").on("click",function() {
 		ipcRenderer.send('upload-image', null)
@@ -1963,6 +1968,15 @@
 				imLeft = image.get('left')
 				imTop = image.get('top');
 			})
+			image.on('selected',function() {
+				$("#fileName").html(image.get('id'));
+				if ($("#trimImageDiv").css("display") == "none") {
+					$("#trimImageDiv").css("display","block");
+					$("#uploadImageDiv").css("display","none");
+					$("#selectedImageDiv").css("display","block");
+				}
+				$("#tipContainer").html("Use Arrow keys to move image 1 pixel.<br>Use Shift + Arrow keys to move image 10 pixels.<br>Use Delete key to remove image");
+			})
 			var h = image.height;
 			var w = image.width;
 			//if ((h > 300) || (w > 300)) {
@@ -1974,7 +1988,8 @@
 			// end fabricJS stuff
 		}
 	}
-	logoCanvas.on('object:selected', function(e) {
+
+	/* logoCanvas.on('object:selected', function(e) {
 		$("#straightenObject").css("display","inline-block");
 		var obj = e.target;
 		if (obj.get('type') == 'image') {
@@ -1986,7 +2001,7 @@
 			}
 			$("#tipContainer").html("Use Arrow keys to move image 1 pixel.<br>Use Shift + Arrow keys to move image 10 pixels.<br>Use Delete key to remove image");
 		}
-	})
+	}) */
 	
 	logoCanvas.on('object:modified', function(e) {
 	 	var obj = e.target;
@@ -4286,7 +4301,7 @@
 		} else {
 			var angle = "0";
 		}
-		logoCanvas.getActiveObject().setAngle(angle);
+		logoCanvas.getActiveObject().set("angle", angle);
 		logoCanvas.renderAll();
 	})
 	
@@ -4294,8 +4309,8 @@
 		showOverlay()	
 		var object = logoCanvas.getActiveObject();
 		if (object.get('type') == "image") {
-			var imageHeight = object.getHeight();
-			var imageWidth = object.getWidth();
+			var imageHeight = object.height;
+			var imageWidth = object.width;
 			if (imageHeight > imageWidth && imageHeight > 29) {
 				object.scaleToHeight(29);
 			} else if (imageWidth > imageHeight && imageWidth > 29) {
@@ -4321,8 +4336,8 @@
 		showOverlay()	
 		var object = logoCanvas.getActiveObject();
 		if (object.get('type') == "image") {
-			var imageHeight = object.getHeight();
-			var imageWidth = object.getWidth();
+			var imageHeight = object.height;
+			var imageWidth = object.width;
 			if (imageHeight > imageWidth && imageHeight > 46) {
 				object.scaleToHeight(46);
 			} else if (imageWidth > imageHeight && imageWidth > 46) {
