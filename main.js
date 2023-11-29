@@ -94,7 +94,7 @@ const fontArray = {
 	"Yellowtail": "Yellowtail-Regular.ttf"
 };
 
-const template = [
+/* const template = [
 // { role: 'appMenu' }
 ...(isMac ? [{
 	label: app.name,
@@ -114,7 +114,13 @@ const template = [
 {
 	label: 'File',
 	submenu: [
-	isMac ? { role: 'close' } : { role: 'quit' }
+		{
+			click: () => mainWindow.webContents.send('save-uniform','click'),
+			accelerator: isMac ? 'Cmd+S' : 'Control+S',
+			label: 'Save Uniform',
+		},
+		{ type: 'separator' },
+		isMac ? { role: 'close' } : { role: 'quit' }
 	]
 },
 // { role: 'viewMenu' }
@@ -177,10 +183,9 @@ const template = [
 	}
 	]
 }
-]
+] */
 
-const menu = Menu.buildFromTemplate(template)
-Menu.setApplicationMenu(menu)
+
 
 ipcMain.on('upload-image', (event, arg) => {
 	let json = {}
@@ -312,6 +317,7 @@ ipcMain.on('save-sweater', (event, arg) => {
 		if (!result.canceled) {
 			Jimp.read(buffer, (err, fir_img) => {
 			if(err) {
+				event.sender.send('hide-overlay',null)
 				console.log(err);
 			} else {
 				var watermark = fs.readFileSync(__dirname + "/images/fhm_watermark.png", {encoding: 'base64'});
@@ -324,16 +330,20 @@ ipcMain.on('save-sweater', (event, arg) => {
 							fir_img.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
 								const finalImage = Buffer.from(buffer).toString('base64');
 								fs.writeFile(result.filePath, finalImage, 'base64', function(err) {
+									event.sender.send('hide-overlay',null)
 									console.log(err);
-								});
+								});		
 							  });
-							
 						}
 					})
 				}
 			});
-		} 
+			event.sender.send('hide-overlay',null)
+		} else {
+			event.sender.send('hide-overlay',null)
+		}
 	}).catch((err) => {
+		event.sender.send('hide-overlay',null)
 		console.log(err);
 	});
 })
@@ -534,6 +544,120 @@ const createWindow = () => {
 		contextIsolation: false
 	  }
     })
+
+	const template = [
+		// { role: 'appMenu' }
+		...(isMac ? [{
+			label: app.name,
+			submenu: [
+			{ role: 'about' },
+			{ type: 'separator' },
+			{ role: 'services' },
+			{ type: 'separator' },
+			{ role: 'hide' },
+			{ role: 'hideOthers' },
+			{ role: 'unhide' },
+			{ type: 'separator' },
+			{ role: 'quit' }
+			]
+		}] : []),
+		// { role: 'fileMenu' }
+		{
+			label: 'File',
+			submenu: [
+				{
+					click: () => mainWindow.webContents.send('save','click'),
+					accelerator: isMac ? 'Cmd+S' : 'Control+S',
+					label: 'Save Sweater',
+				},
+				{
+				  click: () => mainWindow.webContents.send('import-image','click'),
+				  accelerator: isMac ? 'Cmd+I' : 'Control+I',
+				  label: 'Import Image',
+				},
+				{
+				  click: () => mainWindow.webContents.send('import-font','click'),
+				  accelerator: isMac ? 'Cmd+F' : 'Control+F',
+				  label: 'Import Font',
+				},
+				
+				{ type: 'separator' },
+				isMac ? { role: 'close' } : { role: 'quit' }
+			]
+		},
+		// { role: 'viewMenu' }
+		{
+			label: 'View',
+			submenu: [
+			{ role: 'reload' },
+			{ role: 'forceReload' },
+			{ role: 'toggleDevTools' },
+			{ type: 'separator' },
+			{ role: 'resetZoom' },
+			{ role: 'zoomIn' },
+			{ role: 'zoomOut' },
+			{ type: 'separator' },
+			{ role: 'togglefullscreen' }
+			]
+		},
+		{
+			label: 'Window',
+			submenu: [
+			{ role: 'minimize' },
+			{ role: 'zoom' },
+			...(isMac ? [
+				{ type: 'separator' },
+				{ role: 'front' },
+				{ type: 'separator' },
+				{ role: 'window' }
+			] : [
+				{ role: 'close' }
+			])
+			]
+		},
+		{
+			role: 'help',
+			submenu: [
+				{
+					click: () => mainWindow.webContents.send('about','click'),
+						label: 'About the FHM Sweater Factory',
+				},
+				{
+					label: 'About Franchise Hockey Manager',
+					click: async () => {    
+					await shell.openExternal('https://www.ootpdevelopments.com/franchise-hockey-manager-home/')
+					}
+				},
+				{
+					label: 'About Node.js',
+					click: async () => {    
+					await shell.openExternal('https://nodejs.org/en/about/')
+					}
+				},
+				{
+					label: 'About Electron',
+					click: async () => {
+					await shell.openExternal('https://electronjs.org')
+					}
+				},
+				{
+					label: 'About Fabric.js',
+					click: async () => {
+					await shell.openExternal('http://fabricjs.com/')
+					}
+				},
+				{
+					label: 'View project on GitHub',
+					click: async () => {
+					await shell.openExternal('https://github.com/eriqjaffe/FHM-Sweater-Factory')
+					}
+				}
+			]
+		}
+	]
+
+	const menu = Menu.buildFromTemplate(template)
+	Menu.setApplicationMenu(menu)
 
 	watcher.on('add', (path, stats) => {
 		mainWindow.webContents.send('updateFonts','click')

@@ -31,6 +31,8 @@
 		const params = new URLSearchParams(window.location.search)
 		const port = params.get('port')
 
+		require('./renderer.js')
+
 		var initialColors = {jerseyColor:"#E3263A",yokeColor:"#0000FF",yokeStrokeColor:"#FFFFFF",bodyStripe1Color:"#0000FF",bodyStripe2Color:"#00FF00",bodyStripe3Color:"#141414",bodyStripe4Color:"#FFFF00",bodyStripe5Color:"#00FFFF",sleeveStripe1Color:"#0000FF",sleeveStripe2Color:"#00FF00",sleeveStripe3Color:"#141414",sleeveStripe4Color:"#FFFF00",sleeveStripe5Color:"#00FFFF",undershirtColor:"#00FF00",collar1Color:"#0000FF",collar2Color:"#00FFFF",collar3Color:"#FF00FF",collar4Color:"#FFFF00",collar5Color:"#000000",collarPlacardColor:"#FF0000",laceColor:"#FFFFFF",makersMarkColor:"#FFFFFF",stitchingColor:"#000000",camoBaseColor:"#4a551e",camoLayer1Color:"#052503",camoLayer2Color:"#beb585",digiCamoBaseColor:"#9a8b62",digiCamoLayer1Color:"#372900",digiCamoLayer2Color:"#736632",wordmarkTextColor:"#103959",wordmarkTextStroke1Color:"#FFFFFF",wordmarkTextStroke2Color:"#00FF00"}
 		var classicBodyStripes = {classicBody1:2,classicBody2:2,classicBody3:2,classicBody4:2,classicBody5:2,classicBody6:3,classicBody7:2,classicBody8:2,classicBody9:3,classicBody10:2,classicBody11:2,classicBody12:3,classicBody13:2,classicBody14:4,classicBody15:3,classicBody16:3,classicBody17:3,classicBody18:2,classicBody21:3,classicBody20:2,classicBody21:3};
 		var classicSleeveStripes = {classicSleeve1:2,classicSleeve2:3,classicSleeve3:2,classicSleeve4:2,classicSleeve5:2,classicSleeve6:2,classicSleeve7:2,classicSleeve8:3,classicSleeve9:3,classicSleeve10:2,classicSleeve11:2,classicSleeve12:3,classicSleeve13:1,classicSleeve14:2,classicSleeve15:1,classicSleeve16:3,classicSleeve17:3,classicSleeve18:5,classicSleeve21:3,classicSleeve20:3,classicSleeve21:2};
@@ -147,7 +149,9 @@
 				
 				<div id="canvasContainer" style="width:512px; height:575px;">
 					<div id="dropContainer">
-					<div id="overlay" class="sample"></div>
+					<div id="overlay" class="sample">
+						<div id="overlayText"></div>
+					</div>
 					<canvas id="composite" width="512" height="512" style="position:absolute; top:10; left:10; z-index:1;"></canvas>
 					<canvas id="above" width="512" height="512" style="position:absolute; top:10; left:10; z-index:2;"></canvas>
 					</div>
@@ -1510,7 +1514,6 @@
 			show: function(color) {
 				var original_color = color;
 				$(this).data('changed', false);
-				console.log("Hello world")
 			},
 			move: function(color) {
 				change = true;
@@ -2318,6 +2321,8 @@
 		//teamName = teamName.replace(/([^a-zA-Z0-9]+)/g, "_");
 		teamName = teamName.split(' ').join('_');
 		var fileName = "jersey_"+teamName+"_"+$("#jerseyType").val()+yearRange;
+
+		showOverlay("Generating Sweater...")
 		
 		logoCanvas.setBackgroundImage(null, logoCanvas.renderAll.bind(logoCanvas));
 
@@ -4286,7 +4291,7 @@
 	})
 	
 	$(".makePatch").on("click",function(e) {
-		$("#overlay").css("display","inline-block");	
+		showOverlay()	
 		var object = logoCanvas.getActiveObject();
 		if (object.get('type') == "image") {
 			var imageHeight = object.getHeight();
@@ -4309,11 +4314,11 @@
 			}
 		}
 		logoCanvas.renderAll();
-		$("#overlay").css("display","none");
+		hideOverlay()
 	})
 	
 	$("#makeCrest").on("click",function(e) {
-		$("#overlay").css("display","inline-block");	
+		showOverlay()	
 		var object = logoCanvas.getActiveObject();
 		if (object.get('type') == "image") {
 			var imageHeight = object.getHeight();
@@ -4331,7 +4336,7 @@
 			object.setCoords();
 		}
 		logoCanvas.renderAll();
-		$("#overlay").css("display","none");
+		hideOverlay()
 	})
 	
 	$("#warpEffect").on("change",function(e) {
@@ -4626,7 +4631,7 @@
 		}
 		
 		if (warp == true) {	
-			$("#overlay").css("display","inline-block");
+			showOverlay("Applying Warp...")
 			var objects = logoCanvas.getObjects();
 			for (x in objects) {
 				if (objects[x].get('name') == "warpedText") {
@@ -4668,10 +4673,15 @@
 		}
 	}
 
+	ipcRenderer.on("hide-overlay", (event, response) => {
+		console.log("hello world")
+		hideOverlay()
+	})
+
 	ipcRenderer.on('warp-text-response', (event, response) => {
 		if (response.status == "error") {
 			alert(response.message)
-			$("#overlay").css("display","none");
+			hideOverlay()
 		} else {
 			let data = response.data
 			var obj = logoCanvas.getObjects('image').forEach(function(o) {
@@ -4724,7 +4734,7 @@
 				let foo = logoCanvas.getObjects('group').find(o => o.id == "wordmark")
 				foo.set("scaleX",1)
 				foo.set("scaleY",1)
-				$("#overlay").css("display","none");
+				hideOverlay()
 			}
 		}
 	})
@@ -5077,6 +5087,20 @@
 	function getExtension(filename) {
 		var ext = (filename||'').split('.');
 		return ext[ext.length - 1];
+	}
+
+	function showOverlay(text) {
+		$("#overlay").css("display","inline-block")
+		$("#overlayText").text(text)
+		$("#overlayText").css("display","inline-block")
+		spinner.spin(target)
+	}
+
+	function hideOverlay() {
+		spinner.stop(target)
+		$("#overlay").css("display","none")
+		$("#overlayText").text(null)
+		$("#overlayText").css("display","none")
 	}
 </script>
 </html>
