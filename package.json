@@ -38,9 +38,11 @@
     "mac": {
       "category": "public.app-category.utilities",
       "target": [
-        "zip",
         "dmg"
       ]
+    },
+    "dmg": {
+      "writeUpdateInfo": false
     },
     "win": {
       "target": [
@@ -62,13 +64,13 @@
       "include": "build/installer.nsh",
       "uninstallDisplayName": "FHM Sweater Factory ${version}",
       "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
+      "uninstallerIcon": "build/icon.ico",
+      "differentialPackage": false
     },
     "linux": {
       "target": [
         "deb",
-        "rpm",
-        "tar.gz"
+        "rpm"
       ]
     },
     "deb": {}
