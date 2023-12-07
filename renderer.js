@@ -19,3 +19,7 @@ ipcRenderer.on('updateFonts', (event, data) => {
 ipcRenderer.on('about', (event, data) => {
     $("#aboutSweaterfactory").trigger("click")
 });
+
+ipcRenderer.on('update', (event, data) => {
+    $("#checkForUpdates").trigger("click")
+});

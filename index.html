@@ -654,6 +654,7 @@
 						<!--<input type="button" class="button" id="zip" value="Zip Sweater">-->
 						<!--<input type="button" class="button" id="imgur" value="Upload To Imgur">-->
 						<input type="button" class="button" id="clearTexture" value="Clear Custom Texture" style="display:none;">
+						<input type="button" class="button" id="checkForUpdates" value="Check For Updates" style="display:none;">
 						<input type="button" class="button" id="aboutSweaterfactory" value="About Sweater Factory">
 					</div>
 			</div>
@@ -4584,6 +4585,10 @@
 	$(".scaling").on("input",function(e) {
 		wordmarkChange($("#fontTypeCombo").val(),false)
 	})	
+
+	$("#checkForUpdates").on("click", function() {
+		ipcRenderer.send('check-for-update', false)
+	})
 	
 	function diagonalText() {
 		const h = parseInt($("#hSpacing").val())

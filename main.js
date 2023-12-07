@@ -4,8 +4,8 @@ const fs = require('fs');
 const express = require('express');
 const Jimp = require('jimp');
 const imagemagickCli = require('imagemagick-cli');
-const { createSVGWindow } = require('svgdom')
-const window = createSVGWindow()
+/* const { createSVGWindow } = require('svgdom')
+const window = createSVGWindow() */
 const isMac = process.platform === 'darwin'
 const os = require('os');
 const tempDir = os.tmpdir()
@@ -16,6 +16,8 @@ const fontname = require("fontname")
 const chokidar = require('chokidar')
 const font2base64 = require("node-font2base64")
 const hasbin = require('hasbin')
+const versionCheck = require('github-version-checker');
+const pkg = require('./package.json');
 
 const store = new Store();
 
@@ -39,6 +41,12 @@ const watcher = chokidar.watch(userFontsFolder, {
 });
 
 watcher.on('ready', () => {})
+
+const updateOptions = {
+	repo: 'FHM-Sweater-Factory',
+	owner: 'eriqjaffe',
+	currentVersion: pkg.version
+};
 
 const fontArray = {
 	"Acme": "Acme-Regular.ttf",
@@ -295,6 +303,38 @@ ipcMain.on('save-sweater', (event, arg) => {
 		console.log(err);
 	});
 })
+
+ipcMain.on('check-for-update', (event, arg) => {
+	checkForUpdate()
+})
+
+function checkForUpdate() {
+	versionCheck(updateOptions, function (error, update) { // callback function
+		if (error) {
+			dialog.showMessageBox(null, {
+				type: 'error',
+				message: 'An error occurred checking for updates.'
+			});	
+		}
+		if (update) { // print some update info if an update is available
+			dialog.showMessageBox(null, {
+				type: 'question',
+				message: "Current version: "+pkg.version+"\r\n\r\nVersion "+update.name+" is now availble.  Click 'OK' to go to the releases page.",
+				buttons: ['OK', 'Cancel'],
+			}).then(result => {
+				if (result.response === 0) {
+					shell.openExternal(update.url)
+				}
+			})	
+		} else {
+			dialog.showMessageBox(null, {
+				type: 'info',
+				message: "Current version: "+pkg.version+"\r\n\r\nThere is no update available at this time."
+			});	
+		}
+	});
+}
+ 
 
 ipcMain.on('remove-border', (event, arg) => {
 	let imgdata = arg.imgdata
@@ -983,6 +1023,10 @@ const createWindow = () => {
 					click: async () => {
 					await shell.openExternal('https://github.com/eriqjaffe/FHM-Sweater-Factory')
 					}
+				},
+				{
+					click: () => mainWindow.webContents.send('update','click'),
+					label: 'Check For Updates',
 				}
 			]
 		}
