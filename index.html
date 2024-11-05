@@ -2971,7 +2971,7 @@
 				let scaleY = object.get('scaleY')
                 let path = object.get('path')
 				let pictureName = object.get('name');
-				let color = $("#strokeColor").spectrum("get").toHex().toLowerCase()
+				let color = "#"+$("#strokeColor").spectrum("get").toHex().toLowerCase()
                 let width = $("#strokeWidth").val()
 				const x = parseInt(width) + 1, y = parseInt(width);
 				let image = new Image();
@@ -2995,36 +2995,13 @@
 
 					ctx.globalCompositeOperation = 'source-over';
 					ctx.drawImage(image, x, y);
-					ipcRenderer.send('add-stroke', {imgdata: canvas.toDataURL(), left: left, top: top, scaleX: scaleX, path: path, pictureName: pictureName, canvas: "logoCanvas"})
+					ipcRenderer.send('add-stroke', {imgdata: canvas.toDataURL(), left: left, top: top, scaleX: scaleX, scaleY: scaleY, path: path, pictureName: pictureName, canvas: "logoCanvas"})
 				}
 				image.src = object._originalElement.currentSrc
 				return false;
 			}
 		}	
     })
-
-	/* $("#strokeSubmit").on("click", function(e) {
-        if (logoCanvas.getActiveObject()) {
-			//showOverlay()
-			let object = logoCanvas.getActiveObject()
-			let idx = logoCanvas.getObjects().indexOf(object)
-			if (object.get('type') == "image") {
-				console.log(object)
-				let left = object.get("left");
-				let top = object.get("top");
-                let scaleX = object.get('scaleX')
-				let scaleY = object.get('scaleY')
-                let path = object.get('path')
-				let pictureName = object.get('name');
-				let theImage = object._originalElement.currentSrc;
-                let color = $("#strokeColor").spectrum("get").toHex().toLowerCase()
-                let width = $("#strokeWidth").val()
-                theImage = theImage.substr(theImage.indexOf(',') + 1).toString();
-				ipcRenderer.send('add-stroke', {imgdata: theImage, left: left, top: top, scaleX: scaleX, scaleY: scaleY, path: path, pictureName: pictureName, color: color, width: width})
-				return false;
-			}
-		}	
-    }) */
 
 	ipcRenderer.on('imagemagick-response', (event, response) => {
         if (response.status != "success") {
@@ -3046,7 +3023,7 @@
 			var imgObj = new Image();
 			imgObj.src = data;
 			imgObj.onload = function () {
-                var image = new fabric.Image(imgObj);
+				var image = new fabric.Image(imgObj);
 				image.set({
 					originX: 'center',
 					originY: 'center',
@@ -3090,7 +3067,6 @@
 				})
 				
 				canvas.remove(object);
-
 				canvas.add(image);
 				image.moveTo(idx);
 				canvas.renderAll();
