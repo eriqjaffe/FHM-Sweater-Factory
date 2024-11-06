@@ -1,9 +1,9 @@
 const { app, BrowserWindow, dialog, Menu, shell, ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs');
-const express = require('express');
 const Jimp = require('jimp');
-const imagemagickCli = require('imagemagick-cli');
+const { distortUnwrap } = require('@alxcube/lens')
+require('@alxcube/lens-jimp');
 /* const { createSVGWindow } = require('svgdom')
 const window = createSVGWindow() */
 const isMac = process.platform === 'darwin'
@@ -15,15 +15,12 @@ const Store = require("electron-store")
 const fontname = require("fontname")
 const chokidar = require('chokidar')
 const font2base64 = require("node-font2base64")
-const hasbin = require('hasbin')
 const versionCheck = require('github-version-checker');
 const pkg = require('./package.json');
 
 const store = new Store();
 
 const userFontsFolder = path.join(app.getPath('userData'),"fonts")
-
-const imWarning = store.get("imWarning", true)
 
 if (!fs.existsSync(userFontsFolder)) {
     fs.mkdirSync(userFontsFolder);
@@ -104,44 +101,6 @@ const fontArray = {
 	"WendyOne": "WendyOne-Regular.ttf",
 	"Yellowtail": "Yellowtail-Regular.ttf"
 };
-
-const imInstalled = hasbin.sync('magick');
-
-ipcMain.on('imagemagick-warning', (event, arg) => {
-	if (!imInstalled) {
-		event.sender.send('hide-imagemagick', null)
-		if (imWarning) {
-			dialog.showMessageBox({
-				noLink: true,
-				type: 'info',
-				buttons: ['OK', 'Download'],
-				message: 'ImageMagick was not detected, some functionality will not be available.',
-				checkboxLabel: 'Don\'t warn me again',
-				checkboxChecked: false
-			}).then(result => {
-				if (result.checkboxChecked) {
-					store.set("imWarning", false)
-				} else {
-					store.set("imWarning", true)
-				}
-				if (result.response === 1) {
-					switch (process.platform) {
-						case "darwin":
-							shell.openExternal("https://imagemagick.org/script/download.php#macosx")
-							break;
-						case "linux":
-							shell.openExternal("https://imagemagick.org/script/download.php#linux")
-							break;
-						case "win32":
-							shell.openExternal("https://imagemagick.org/script/download.php#windows")
-							break;
-					}
-					app.quit()
-				} 
-			})	
-		} 
-	}
-})
 
 ipcMain.on('upload-image', (event, arg) => {
 	let json = {}
@@ -377,199 +336,6 @@ ipcMain.on('remove-border', (event, arg) => {
 	})
 })
 
-ipcMain.on('remove-color-range', (event, arg) => {
-	let buffer = Buffer.from(arg.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
-	let x = parseInt(arg.x);
-	let y = parseInt(arg.y);
-	let pTop = arg.pTop
-	let pLeft = arg.pLeft
-	let pScaleX = arg.pScaleX
-	let pScaleY = arg.pScaleY
-	let pictureName = arg.pictureName
-	let colorSquare = arg.colorSquare
-	let fuzz = parseInt(arg.fuzz);
-	let canvas = arg.canvas
-	let path = arg.path
-	let json = {}
-	Jimp.read(buffer, (err, image) => {
-		if (err) {
-			json.status = 'error'
-			json.message = "An error occurred - please make sure ImageMagick is installed"
-			console.log(err);
-			event.sender.send('imagemagick-response', json)
-		} else {
-			image.write(tempDir+"/temp.png", (err) => {
-				try {
-					imagemagickCli.exec('magick convert '+tempDir+'/temp.png -fuzz '+fuzz+'% -fill none -draw "color '+x+','+y+' floodfill" '+tempDir+'/temp.png')
-					.then(({ stdout, stderr }) => {
-						Jimp.read(tempDir+"/temp.png", (err, image) => {
-							if (err) {
-								json.status = 'error'
-								json.message = "An error occurred - please make sure ImageMagick is installed"
-								console.log(err);
-								event.sender.send('imagemagick-response', json)
-							} else {
-								image.autocrop()
-								image.getBase64(Jimp.AUTO, (err, ret) => {
-									json.status = 'success'
-									json.data = ret
-									json.canvas = canvas
-									json.x = x
-									json.y = y
-									json.pTop = pTop
-									json.pLeft = pLeft
-									json.pScaleX = pScaleX
-									json.pScaleY = pScaleY
-									json.pictureName = pictureName
-									json.colorSquare = colorSquare
-									json.path = path
-									event.sender.send('imagemagick-response', json)
-								})
-							}
-						})
-					})
-				} catch (error) {
-					json.status = 'error'
-					json.message = "An error occurred - please make sure ImageMagick is installed"
-					console.log(err);
-					event.sender.send('imagemagick-response', json)
-				}
-				
-			})
-		}
- 	})
-})
-
-ipcMain.on('remove-all-color', (event, arg) => {
-	let buffer = Buffer.from(arg.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
-	let x = parseInt(arg.x);
-	let y = parseInt(arg.y);
-	let pTop = arg.pTop
-	let pLeft = arg.pLeft
-	let pScaleX = arg.pScaleX
-	let pScaleY = arg.pScaleY
-	let pictureName = arg.pictureName
-	let colorSquare = arg.colorSquare
-	let fuzz = parseInt(arg.fuzz);
-	let canvas = arg.canvas
-	let color = arg.color
-	let path = arg.path
-	let json = {}
-	Jimp.read(buffer, (err, image) => {
-		if (err) {
-			json.status = 'error'
-			json.message = err
-			console.log(err);
-			event.sender.send('imagemagick-response', json)
-		} else {
-			image.write(tempDir+"/temp.png", (err) => {
-				try {
-					imagemagickCli.exec('magick convert '+tempDir+'/temp.png -fuzz '+fuzz+'% -transparent '+color+' '+tempDir+'/temp.png')
-					.then(({ stdout, stderr }) => {
-						Jimp.read(tempDir+"/temp.png", (err, image) => {
-							if (err) {
-								json.status = 'error'
-								json.message = err
-								console.log(err);
-								event.sender.send('imagemagick-response', json)
-							} else {
-								image.autocrop()
-								image.getBase64(Jimp.AUTO, (err, ret) => {
-									json.status = 'success'
-									json.data = ret
-									json.canvas = canvas
-									json.x = x
-									json.y = y
-									json.pTop = pTop
-									json.pLeft = pLeft
-									json.pScaleX = pScaleX
-									json.pScaleY = pScaleY
-									json.pictureName = pictureName
-									json.colorSquare = colorSquare
-									json.path = path
-									event.sender.send('imagemagick-response', json)
-								})
-							}
-						})
-					})
-				} catch (error) {
-					json.status = 'error'
-					json.message = "An error occurred - please make sure ImageMagick is installed"
-					console.log(err);
-					event.sender.send('imagemagick-response', json)
-				}
-				
-			})
-		}
- 	})
-})
-
-ipcMain.on('make-transparent', (event, arg) => {
-	let buffer = Buffer.from(arg.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
-	let x = parseInt(arg.x);
-	let y = parseInt(arg.y);
-	let pTop = arg.pTop
-	let pLeft = arg.pLeft
-	let pScaleX = arg.pScaleX
-	let pScaleY = arg.pScaleY
-	let pictureName = arg.pictureName
-	let colorSquare = arg.colorSquare
-	let fuzz = parseInt(arg.fuzz);
-	let canvas = arg.canvas
-	let path = arg.path
-	let json = {}
-	Jimp.read(buffer, (err, image) => {
-		if (err) {
-			json.status = 'error'
-			json.message = "An error occurred - please make sure ImageMagick is installed"
-			console.log(err);
-			event.sender.send('imagemagick-response', json)
-		} else {
-            let cornerColor = image.getPixelColor(x, y)
-            new Jimp(image.bitmap.width+20, image.bitmap.height+20, cornerColor, (err, img) => {
-                img.blit(image, 10, 10)
-                img.write(tempDir+"/temp.png", (err) => {
-                    try {
-                        imagemagickCli.exec('magick convert '+tempDir+'/temp.png -fuzz '+fuzz+'% -fill none -draw "color '+x+','+y+' floodfill" '+tempDir+'/temp.png')
-                        .then(({ stdout, stderr }) => {
-                            Jimp.read(tempDir+"/temp.png", (err, image) => {
-                                if (err) {
-                                    json.status = 'error'
-                                    json.message = "An error occurred - please make sure ImageMagick is installed"
-                                    console.log(err);
-                                    event.sender.send('imagemagick-response', json)
-                                } else {
-                                    image.autocrop()
-									image.getBase64(Jimp.AUTO, (err, ret) => {
-                                        json.status = 'success'
-                                        json.data = ret
-                                        json.canvas = canvas
-                                        json.x = x
-                                        json.y = y
-                                        json.pTop = pTop
-                                        json.pLeft = pLeft
-                                        json.pScaleX = pScaleX
-                                        json.pScaleY = pScaleY
-                                        json.pictureName = pictureName
-                                        json.colorSquare = colorSquare
-										json.path = path
-                                        event.sender.send('imagemagick-response', json)
-                                    })
-                                }
-                            })
-                        })
-                    } catch (error) {
-                        json.status = 'error'
-                        json.message = "An error occurred - please make sure ImageMagick is installed"
-                        console.log(err);
-                        event.sender.send('imagemagick-response', json)
-                    }
-                })
-            })		
-		}
- 	})
-})
-
 ipcMain.on('replace-color', (event, arg) => {
 	let imgdata = arg[0]
 	let pLeft = arg[1]
@@ -657,126 +423,216 @@ ipcMain.on('add-stroke', (event, arg) => {
 
 ipcMain.on('warp-text', (event, arg) => {
 	let buffer = Buffer.from(arg.imgdata.replace(/^data:image\/(png|gif|jpeg);base64,/,''), 'base64');
-	let amount = arg.amount;
+	let amount = arg.amount * 4;
 	let deform = arg.deform;
-	let width;
-	let height;
-	let cmdLine;
 	let json = {}
-	Jimp.read(buffer, (err, image) => {
-		if (err) {
-			json.status = 'error'
-			json.message = err
-			console.log(err);
-			event.sender.send('warp-text-response', json)
-		} else {
-			image.autocrop();
-			image.write(tempDir+"/temp.png");
-			width = image.bitmap.width;
-			height = image.bitmap.height;
-			switch (deform) {
-				case "arch":
-					cmdLine = 'magick convert -background transparent -wave -'+amount+'x'+width*2+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png'
-					break;
-				case "arc":
-					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel Background -background transparent -distort Arc '+amount+' -trim +repage '+tempDir+'/'+deform+'.png'
-					break;
-				case "bilinearUp":
-					var y2=height*((100-amount)*0.01)
-					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+height+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+y2+'" '+tempDir+'/'+deform+'.png'
-					break;
-				case "bilinearDown":
-					var y2=height*((100-amount)*0.01)
-					cmdLine = 'magick convert '+tempDir+'/temp.png -virtual-pixel transparent -interpolate Spline -distort BilinearForward "0,0 0,0 0,'+height+' 0,'+y2+' '+width+',0 '+width+',0 '+width+','+height+' '+width+','+height+'" '+tempDir+'/'+deform+'.png'
-					break;
-				case "archUp":
+	try {
+		switch (deform) {
+			case "arch":
+				arch()
+				async function arch() {
 					try {
-						imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity west -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
-							imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
-								Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
-									if (err) {
-										json.status = 'error'
-										json.message = err
-										console.log(err);
-										event.sender.send('warp-text-response', json)
-									} else {
-										image.getBase64(Jimp.AUTO, (err, ret) => {
-											json.status = 'success'
-											json.data = ret
-											event.sender.send('warp-text-response', json)
-											//res.end(ret);
-										})
-									}
-								})
-							})
-						})
-					} catch (err) {
-						json.status = 'error'
-						json.message = err
-						console.log(err);
+						let image = await Jimp.read(buffer);
+						image.autocrop()
+						const centeredImage = await new Jimp(1024, 1024, 0x00000000)
+						const newImage = await new Jimp(1024, 1024);
+						const x = (1024 - image.bitmap.width) / 2;
+						const y = (1024 - image.bitmap.height) / 2;
+						await centeredImage.blit(image, x, y);
+						//await centeredImage.write(tempDir+"/temp_resized.png")
+						centeredImage.scan(0, 0, centeredImage.bitmap.width, centeredImage.bitmap.height, function (x, y, idx) {
+							const radians = x / centeredImage.bitmap.width * 360 * Math.PI / 180;
+							const offsetY = (amount * -1) * Math.cos(radians);
+							const newY = y + offsetY;
+						
+							const yFloor = Math.floor(newY);
+							const yCeil = Math.ceil(newY);
+							const yWeight = newY - yFloor;
+						
+							const clampedYFloor = Math.max(0, Math.min(centeredImage.bitmap.height - 1, yFloor));
+							const clampedYCeil = Math.max(0, Math.min(centeredImage.bitmap.height - 1, yCeil));
+						
+							const colorFloor = Jimp.intToRGBA(centeredImage.getPixelColor(x, clampedYFloor));
+							const colorCeil = Jimp.intToRGBA(centeredImage.getPixelColor(x, clampedYCeil));
+						
+							const r = colorFloor.r * (1 - yWeight) + colorCeil.r * yWeight;
+							const g = colorFloor.g * (1 - yWeight) + colorCeil.g * yWeight;
+							const b = colorFloor.b * (1 - yWeight) + colorCeil.b * yWeight;
+							const a = colorFloor.a * (1 - yWeight) + colorCeil.a * yWeight;
+						
+							const interpolatedColor = Jimp.rgbaToInt(r, g, b, a);
+							newImage.setPixelColor(interpolatedColor, x, y);
+						});
+						newImage.autocrop()
+						let b64 = await newImage.getBase64Async(Jimp.AUTO)
+						json.status = 'success'
+						json.data = b64
 						event.sender.send('warp-text-response', json)
+					} catch (error) {
+						console.error('Error applying wave effect:', error);
+						return null;
 					}
-					break;
-				case "archDown":
+				}
+				break;
+			case "arc":
+				arc()
+				async function arc() {
+					let image = await Jimp.read(buffer)
+					image.autocrop()
+					let result = await distortUnwrap(image, "Arc", [parseInt(amount/4)])
+					let tempImg = await new Jimp(result.bitmap.width*4, result.bitmap.height*4)
+					await tempImg.blit(result, 5, 5)
+					await tempImg.autocrop()
+					let b64 = await tempImg.getBase64Async(Jimp.AUTO)
+					json.status = 'success'
+					json.data = b64
+					event.sender.send('warp-text-response', json)
+				}
+				break;
+			case "bilinearUp":
+				bilinearUp()
+				async function bilinearUp() {
+					let image = await Jimp.read(buffer)
+					await image.autocrop()
+					const y2=image.bitmap.height*((100-(amount/4))*0.01)
+					const controlPoints = [1.5,0,0,0,0,0,image.bitmap.height,0,image.bitmap.height,image.bitmap.width,0,image.bitmap.width,0,image.bitmap.width,image.bitmap.height,image.bitmap.width,y2]
+					const result = await distortUnwrap(image, "Polynomial", controlPoints)
+					const tempImg = await new Jimp(result.bitmap.width*4, result.bitmap.height*4)
+					await tempImg.blit(result, 5, 5)
+					await tempImg.autocrop()
+					let b64 = await tempImg.getBase64Async(Jimp.AUTO)
+					json.status = 'success'
+					json.data = b64
+					event.sender.send('warp-text-response', json)
+				}
+				break;
+			case "bilinearDown":
+				bilinearDown()
+				async function bilinearDown() {
+					let image = await Jimp.read(buffer)
+					await image.autocrop()
+					const y2=image.bitmap.height*((100-(amount/4))*0.01)
+					const controlPoints = [1.5,0,0,0,0,0,image.bitmap.height,0,y2,image.bitmap.width,0,image.bitmap.width,0,image.bitmap.width,image.bitmap.height,image.bitmap.width,image.bitmap.height]
+					const result = await distortUnwrap(image, "Polynomial", controlPoints)
+					const tempImg = await new Jimp(result.bitmap.width*4, result.bitmap.height*4)
+					await tempImg.blit(result, 5, 5)
+					await tempImg.autocrop()
+					let b64 = await tempImg.getBase64Async(Jimp.AUTO)
+					json.status = 'success'
+					json.data = b64
+					event.sender.send('warp-text-response', json)
+				}
+				break;
+			case "archUp":
+				archUp()
+				async function archUp() {
 					try {
-						imagemagickCli.exec('magick convert '+tempDir+'/temp.png -gravity east -background transparent -extent '+width*2+'x'+height+' '+tempDir+'/temp.png').then(({stdout, stderr }) => {
-							imagemagickCli.exec('magick convert -background transparent -wave -'+amount*2+'x'+width*4+' -trim +repage '+tempDir+'/temp.png '+tempDir+'/'+deform+'.png').then(({ stdout, stderr }) => {
-								Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
-									if (err) {
-										json.status = 'error'
-										json.message = err
-										console.log(err);
-										event.sender.send('warp-text-response', json)
-									} else {
-										image.getBase64(Jimp.AUTO, (err, ret) => {
-											json.status = 'success'
-											json.data = ret
-											event.sender.send('warp-text-response', json)
-										})
-									}
-								})
-							})
-						})
-					} catch (err) {
-						json.status = 'error'
-						json.message = err
-						console.log(err);
+						let image = await Jimp.read(buffer);
+						const x = (1024 - image.bitmap.width) / 2;
+						const y = (1024 - image.bitmap.height) / 2;
+						const centeredImage = await new Jimp(1024, 1024, 0x00000000)
+						await centeredImage.blit(image, x, y);
+						const tempImage = new Jimp(image.bitmap.width * 2, image.bitmap.height)
+						tempImage.blit(centeredImage, 0, 0, 0, 0, image.bitmap.width, image.bitmap.height);
+						const newImage = new Jimp(image.bitmap.width, image.bitmap.height);
+						tempImage.scan(0, 0, image.bitmap.width, image.bitmap.height, function (x, y, idx) {
+							const radians = (x * 180) / image.bitmap.width * Math.PI / 180;
+							const offsetY = (amount * -1) * Math.cos(radians);
+							const newY = y + offsetY;
+						
+							const yFloor = Math.floor(newY);
+							const yCeil = Math.ceil(newY);
+							const yWeight = newY - yFloor;
+						
+							const clampedYFloor = Math.max(0, Math.min(image.bitmap.height - 1, yFloor));
+							const clampedYCeil = Math.max(0, Math.min(image.bitmap.height - 1, yCeil));
+						
+							const colorFloor = Jimp.intToRGBA(image.getPixelColor(x, clampedYFloor));
+							const colorCeil = Jimp.intToRGBA(image.getPixelColor(x, clampedYCeil));
+						
+							const r = colorFloor.r * (1 - yWeight) + colorCeil.r * yWeight;
+							const g = colorFloor.g * (1 - yWeight) + colorCeil.g * yWeight;
+							const b = colorFloor.b * (1 - yWeight) + colorCeil.b * yWeight;
+							const a = colorFloor.a * (1 - yWeight) + colorCeil.a * yWeight;
+						
+							const interpolatedColor = Jimp.rgbaToInt(r, g, b, a);
+							newImage.setPixelColor(interpolatedColor, x, y);
+						});
+						
+						newImage.autocrop();
+						
+						let b64 = await newImage.getBase64Async(Jimp.AUTO)
+						json.status = 'success'
+						json.data = b64
 						event.sender.send('warp-text-response', json)
+					} catch (error) {
+						console.error('Error applying wave effect:', error);
+						return null;
 					}
-					break;
-				default:
+				}
+				break;
+			case "archDown":
+				archDown()
+				async function archDown() {
+					try {
+						let image = await Jimp.read(buffer);
+						const x = (1024 - image.bitmap.width) / 2;
+						const y = (1024 - image.bitmap.height) / 2;
+						const centeredImage = await new Jimp(1024, 1024, 0x00000000)
+						await centeredImage.blit(image, x, y);
+						const tempImage = new Jimp(image.bitmap.width * 2, image.bitmap.height)
+						tempImage.blit(centeredImage, image.bitmap.width, 0, 0, 0, image.bitmap.width, image.bitmap.height);
+						const newImage = new Jimp(image.bitmap.width, image.bitmap.height);
+						tempImage.scan(0, 0, image.bitmap.width, image.bitmap.height, function (x, y, idx) {
+							const radians = (x * 180) / image.bitmap.width * Math.PI / 180;
+							const offsetY = amount * Math.cos(radians);
+							const newY = y + offsetY;
+						
+							const yFloor = Math.floor(newY);
+							const yCeil = Math.ceil(newY);
+							const yWeight = newY - yFloor;
+						
+							const clampedYFloor = Math.max(0, Math.min(image.bitmap.height - 1, yFloor));
+							const clampedYCeil = Math.max(0, Math.min(image.bitmap.height - 1, yCeil));
+						
+							const colorFloor = Jimp.intToRGBA(image.getPixelColor(x, clampedYFloor));
+							const colorCeil = Jimp.intToRGBA(image.getPixelColor(x, clampedYCeil));
+						
+							const r = colorFloor.r * (1 - yWeight) + colorCeil.r * yWeight;
+							const g = colorFloor.g * (1 - yWeight) + colorCeil.g * yWeight;
+							const b = colorFloor.b * (1 - yWeight) + colorCeil.b * yWeight;
+							const a = colorFloor.a * (1 - yWeight) + colorCeil.a * yWeight;
+						
+							const interpolatedColor = Jimp.rgbaToInt(r, g, b, a);
+							newImage.setPixelColor(interpolatedColor, x, y);
+						});						
+						newImage.autocrop()
+						let b64 = await newImage.getBase64Async(Jimp.AUTO)
+						json.status = 'success'
+						json.data = b64
+						event.sender.send('warp-text-response', json)
+					} catch (error) {
+						console.error('Error applying wave effect:', error);
+						return null;
+					}
+				}
+				break;
+			default:
+				Jimp.read(buffer, (err, image) => {
 					image.getBase64(Jimp.AUTO, (err, ret) => {
 						json.status = 'success'
 						json.data = ret
 						event.sender.send('warp-text-response', json)
 					})
-					break;
-			}
-			try {
-				imagemagickCli.exec(cmdLine).then(({ stdout, stderr }) => {
-					Jimp.read(tempDir+'/'+deform+'.png', (err, image) => {
-						if (err) {
-							json.status = 'error'
-							json.message = err
-							console.log(err);
-							event.sender.send('warp-text-response', json)
-						} else {
-							image.getBase64(Jimp.AUTO, (err, ret) => {
-								json.status = 'success'
-								json.data = ret
-								event.sender.send('warp-text-response', json)
-							})
-						}
-					})
 				})
-			} catch (err) {
-				json.status = 'error'
-				json.message = err
-				console.log(err);
-				event.sender.send('warp-text-response', json)
-			}
+				break;		
 		}
-	})
+	} catch (err) {
+		json.status = 'error'
+		json.message = err.message
+		log.error(err);
+		event.sender.send('warp-text-response', json)
+	}
 })
 
 ipcMain.on('drop-image', (event, arg) => {

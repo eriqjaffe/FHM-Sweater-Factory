@@ -537,7 +537,7 @@
 										<select id="warpEffect" class="textOption" style="width:100%;" is="ms-dropdown" data-visible-rows="8">
 											<option value="none" data-image="./images/none.png"></option>
 											<option class="imagemagick" value="arch" data-value="15" data-image="./images/arched.png"></option>
-											<optionclass="imagemagick"  value="arc" data-value="70" data-image="./images/arced.png"></option>
+											<option class="imagemagick"  value="arc" data-value="70" data-image="./images/arced.png"></option>
 											<option value="skewUp" data-value="25" data-image="./images/skewup.png"></option>
 											<option value="skewDown" data-value="25" data-image="./images/skewdown.png"></option>
 											<option value="skewLeft" data-value="25" data-image="./images/skewleft.png"></option>
@@ -1080,12 +1080,6 @@
 </div>
 </body>
 <script>
-	ipcRenderer.on('hide-imagemagick', (event, arg) => {
-		$(".imagemagick").each(function() {
-			$(this).css("display","none");
-		})
-	})
-
 	var spinnerOptions = {lines: 13, length: 28, width: 14, radius: 42, scale: 2, corners: 1, color: '#4283C7', opacity: 0.25, rotate: 0, direction: 1, speed: 1, trail: 60, fps: 20, zIndex: 2e9, className: 'spinner', top: '50%', left: '50%', shadow: false, hwaccel: false, position: 'absolute'}
     var target = document.getElementById('overlay');
     var spinner = new Spinner(spinnerOptions).spin(target);
@@ -1242,7 +1236,6 @@
 
 		sortFontDropdown()
 
-		ipcRenderer.send('imagemagick-warning', null)
 	});
 	
 	$("#colorFormat").on("change",function(e) {
