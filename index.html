@@ -552,10 +552,10 @@
 									</td>
 									<td style="width:80%;" colspan="2">
 										<div style="width:80%; text-align:center;" class="standardWarp">
-											<input type="range" class="range" class="textOption" id="warpAmount" value="0" min="1" max="100" style="width:100%; float:left;">
+											<input type="range" class="range textOption warpAdjustment" id="warpAmount" value="0" min="1" max="100" style="width:100%; float:left;">
 										</div>
 										<div style="width:15%; text-align:right; float:right;" class="standardWarp">
-											<input type="number" class="textOption" style="width:50px; text-align:center;" id="warpAmountDisplay" val="0">
+											<input type="number" class="textOption warpAdjustment" style="width:50px; text-align:center;" id="warpAmountDisplay" val="0">
 										</div>
 										<div style="width:49%; display:none; float:left; text-align:center;" class="diagonalWarp">
 											Horizontal Spacing: <input type="number" id="hSpacing" value="19" class="textOption spacing" style="width:40px;">
@@ -5134,6 +5134,160 @@
 	$("#warpEffect").on("change",function(e) {
 		initializeWarp();
 	})
+
+	$("#warpAmount").on("change",function() {
+		var selected = $("#warpEffect").find('option:selected');
+		selected.data('value',$(this).val());
+		$("#warpAmountDisplay").val($(this).val());
+		const g = logoCanvas.getObjects('group').find(o => o.id === 'wordmark');
+		switch ($("#warpEffect").val()) {
+			case "none":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				g.set("skewX", 0)
+				g.set("skewY", 0)
+				logoCanvas.renderAll();
+				break;
+			case "skewUp":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*-45;
+				g.set("skewX", 0)
+				g.set("skewY", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewDown":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*45;
+				g.set("skewX", 0)
+				g.set("skewY", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewLeft":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*45;
+				g.set("skewY", 0)
+				g.set("skewX", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewRight":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*-45;
+				g.set("skewY", 0)
+				g.set("skewX", amount)
+				logoCanvas.renderAll();
+				break;
+			default:
+				g.set("skewX", 0)
+				g.set("skewY", 0)
+				logoCanvas.renderAll();
+				warpText();
+				break;
+		}	
+	})
+
+	$("#warpAmountDisplay").on("change",function() {
+		if (parseInt($(this).val()) < parseInt($(this).attr("min"))) {
+			$(this).val(parseInt($(this).attr("min")))
+		}
+		if (parseInt($(this).val()) > parseInt($(this).attr("max"))) {
+			$(this).val(parseInt($(this).attr("max")))
+		}
+		var selected = $("#warpEffect").find('option:selected');
+		selected.data('value',$(this).val());
+		$("#warpAmount").val($(this).val());
+		const g = logoCanvas.getObjects('group').find(o => o.id === 'wordmark');
+		switch ($("#warpEffect").val()) {
+			case "none":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				g.set("skewX", 0)
+				g.set("skewY", 0)
+				logoCanvas.renderAll();
+				break;
+			case "skewUp":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*-45;
+				g.set("skewX", 0)
+				g.set("skewY", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewDown":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*45;
+				g.set("skewX", 0)
+				g.set("skewY", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewLeft":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*45;
+				g.set("skewY", 0)
+				g.set("skewX", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewRight":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*-45;
+				g.set("skewY", 0)
+				g.set("skewX", amount)
+				logoCanvas.renderAll();
+				break;
+			default:
+				g.set("skewX", 0)
+				g.set("skewY", 0)
+				logoCanvas.renderAll();
+				initializeWarp();
+				break;
+		}	
+	})
 	
 	function initializeWarp() {
 		wordmarkText.set("scaleX",1);
@@ -5261,6 +5415,10 @@
 		wordmarkChange($("#fontTypeCombo").val(),false)
 	})	
 
+	$(".spacing").on("input",function(e) {
+		diagonalText()
+	})
+
 	$("#checkForUpdates").on("click", function() {
 		ipcRenderer.send('check-for-update', false)
 	})
@@ -5268,7 +5426,6 @@
 	function diagonalText() {
 		const h = parseInt($("#hSpacing").val())
 		const v = parseInt($("#vSpacing").val())
-		const font = $("#jerseyWordmarkSelect").val()
 		var objects = logoCanvas.getObjects();
 		for (x in objects) {
 			if (objects[x].get('name') == "warpedText") {
@@ -5276,7 +5433,7 @@
 			}
 		}
 
-		opentype.load("./fonts/pro_full_block-webfont.ttf", (err,font) => {
+		opentype.load($("#fontTypeCombo").val(), (err,font) => {
 			if (err || !font) {
 				console.log(err)
 				return;
