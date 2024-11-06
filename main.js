@@ -704,7 +704,7 @@ const createWindow = () => {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
       width: 1280,
-      height: 760,
+      height: 780,
 	  icon: (__dirname + '/images/sweater.png'),
       webPreferences: {
 		nodeIntegration: true,
