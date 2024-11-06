@@ -23,12 +23,11 @@
     "electron-store": "^8.1.0",
     "fontname": "^1.0.1",
     "github-version-checker": "^2.3.0",
-    "jimp": "0.22.12",
-    "node-font2base64": "^0.9.2"
+    "jimp": "0.22.12"
   },
   "devDependencies": {
-    "electron": "^27.1.2",
-    "electron-builder": "^24.9.1"
+    "electron": "^33.1.0",
+    "electron-builder": "^25.1.8"
   },
   "build": {
     "asar": true,
