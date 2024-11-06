@@ -5422,7 +5422,7 @@
 	$("#checkForUpdates").on("click", function() {
 		ipcRenderer.send('check-for-update', false)
 	})
-	
+
 	function diagonalText() {
 		const h = parseInt($("#hSpacing").val())
 		const v = parseInt($("#vSpacing").val())
@@ -5919,19 +5919,28 @@
                 fontDropdown.refresh()
             } else {
 				fontList.push(data.fontName)
-				let tmpTxt = new fabric.IText("ABC 123",{
-					fontFamily: data.familyName,
-					fontSize: 96,
-					originX: 'center',
-					originY: 'center',
-					textAlign: 'center',
-					fill: 'black',
-					stroke: 'black',
-					originX: 'center',
-					originY: 'center',
+				opentype.load(data.fontPath, (err,font) => {
+					if (err || !font) {
+						console.log(err)
+						return;
+					}
+					
+					var thumbText = font.getPath("ABC 123", 0, 0, 96)
+					var outPath = thumbText.toPathData(5)
+
+					thumbText = new fabric.Path(outPath, {
+						left: 0,
+						originX: 'center',
+						originY: 'center',
+						centeredScaling: true,
+						centeredRotation: true,
+						fill: 'black',
+						height: '80px'
+					})
+
+					refreshDropdown(data,thumbText)
+					wordmarkChange(data,false)
 				})
-				refreshDropdown(data,tmpTxt)
-				wordmarkChange(data,false)
             }
         }
     }
