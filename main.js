@@ -849,8 +849,8 @@ const createWindow = () => {
 	});
 
 	// Open the DevTools.
-    mainWindow.maximize()
-    mainWindow.webContents.openDevTools()
+    //mainWindow.maximize()
+    //mainWindow.webContents.openDevTools()
   
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
