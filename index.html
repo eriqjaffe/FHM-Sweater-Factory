@@ -27,7 +27,7 @@
 	<link href='./scripts/dd.css' rel='stylesheet' type='text/css'>
 	<link href='./scripts/jquery.range.css' rel='stylesheet' type='text/css'>
 	<script>
-		const { ipcRenderer } = require('electron');
+		const { ipcRenderer, webUtils } = require('electron');
 		const params = new URLSearchParams(window.location.search)
 		const port = params.get('port')
 
@@ -40,10 +40,7 @@
 		var laceOptions = ['tiedLaces1','tiedLaces2','untiedLaces1'];
 		var defaultTexture = "default_sweater_texture.png";
 		var originalColor = {};
-		var prefColorFormat = $.localStorage.getItem('sweaterfactory.color_format');
-		if (!prefColorFormat) {
-			prefColorFormat = "hex";
-		}
+
 		var fontSources = {
 			Acme: "Acme-Regular.ttf",
 			athletic_gothicregular: "athletic_gothic-webfont.ttf",
@@ -108,7 +105,7 @@
 		let fontList = ["Acme", "Athletic Gothic", "Athletic Gothic Shadow", "Fancy Block", "Berkshire Swash", "Cantora", "Caxton Roman", "Chela", "Circus", "Condiment", "Cookie", "Courgette", "Croissant", "Damion", "Engagement", "Fancy Block", "Germania", "Graduate", "Grand Hotel", "Jockey", "Kansas Tuscan", "Kaushan Script", "Leckerli", "Lily Script", "Lobster", "Lobster Two", "Metal Mania", "Miniver", "Molle", "New Rocker", "Norican", "Old English", "Oleo Script", "Oleo Script Swash Caps", "Pacifico", "Pirata", "Playball", "Pro Full Block", "Richardson Block", "Rubik", "Rum Raisin", "Satisfy", "Seymour", "SPL28 Script", "Tiffany Regular", "Trade Winds", "Tuscan", "Unifraktur Cook", "Unifraktur Maguntia", "Vibur", "Viga", "Wellfleet", "Wendy", "Yellowtail"]
 
 		const validFontTypes = ["ttf","otf"]
-		const validImageTypes = ["png","jpg","jpeg","bmp","gif","tiff"]
+		const validImageTypes = ["png","jpg","jpeg","bmp","gif","tiff","webp","svg","psd","heic","heif"]
 	</script>
     <!--[if IE]>
       <style type="text/css">
@@ -533,7 +530,7 @@
 										<select id="warpEffect" class="textOption" style="width:100%;" is="ms-dropdown" data-visible-rows="8">
 											<option value="none" data-image="./images/none.png"></option>
 											<option class="imagemagick" value="arch" data-value="15" data-image="./images/arched.png"></option>
-											<optionclass="imagemagick"  value="arc" data-value="70" data-image="./images/arced.png"></option>
+											<option class="imagemagick"  value="arc" data-value="70" data-image="./images/arced.png"></option>
 											<option value="skewUp" data-value="25" data-image="./images/skewup.png"></option>
 											<option value="skewDown" data-value="25" data-image="./images/skewdown.png"></option>
 											<option value="skewLeft" data-value="25" data-image="./images/skewleft.png"></option>
@@ -548,10 +545,10 @@
 									</td>
 									<td style="width:80%;" colspan="2">
 										<div style="width:80%; text-align:center;" class="standardWarp">
-											<input type="range" class="range" class="textOption" id="warpAmount" value="0" min="1" max="100" style="width:100%; float:left;">
+											<input type="range" class="range textOption warpAdjustment" id="warpAmount" value="0" min="1" max="100" style="width:100%; float:left;">
 										</div>
 										<div style="width:15%; text-align:right; float:right;" class="standardWarp">
-											<input type="number" class="textOption" style="width:50px; text-align:center;" id="warpAmountDisplay" val="0">
+											<input type="number" class="textOption warpAdjustment" style="width:50px; text-align:center;" id="warpAmountDisplay" val="0">
 										</div>
 										<div style="width:49%; display:none; float:left; text-align:center;" class="diagonalWarp">
 											Horizontal Spacing: <input type="number" id="hSpacing" value="19" class="textOption spacing" style="width:40px;">
@@ -646,6 +643,13 @@
 										</select>
 									</td>
 								</tr>
+								<tr>
+									<td class="checkCell">&nbsp;</td>
+									<td>Preferred Crest Auto-Size:</td>
+									<td style="text-align:right;">
+										<input style="text-align:center; width:50px;" type="number" id="defaultCrestSize" min="20" max="100" value="46">
+									</td>
+								</tr>
 							</table>
 						</div>
 					</div>
@@ -656,6 +660,7 @@
 						<input type="button" class="button" id="clearTexture" value="Clear Custom Texture" style="display:none;">
 						<input type="button" class="button" id="checkForUpdates" value="Check For Updates" style="display:none;">
 						<input type="button" class="button" id="aboutSweaterfactory" value="About Sweater Factory">
+						<input type="button" class="button" id="prefsButton" value="Preferences" style="display:none;">
 					</div>
 			</div>
 			
@@ -677,13 +682,410 @@
 			<div class="answer">That would be me.  My name is Eriq Jaffe, and while I don't have Franchise Hockey Manager, I've been playing OOTP Baseball since 2004.  Feel free to <a href="mailto:eriqjaffe@ootputilities.com">shoot me an email</a> with any questions or comments about this site.<br><br>The textures and shapes are based heavily on the Photoshop template (available <a href="http://www.ootpdevelopments.com/board/fhm-2-mods/258741-announcing-1st-release-fhm2-jersey-template.html" target="_blank">here</a>) developed by Hockey13Playa, Pwal, and Isedelyod.<br><br>I'd also like to give an additional shout out to <a href="https://fontsbyconrad.wordpress.com/" target="_blank">Conrad Burry</a>, who created some of the fonts that can be used on the sweaters.</div><br>
 		</div>
 	</div>
+	<div id="prefs" class="jm-white-popup mfp-hide" style="height:370px!important;">
+		<div style="width:100%; text-align:center;">	
+			<span class="header" style="color:#103959!important; font-size:2em!important;">Uniform Maker Preferences</span>
+			<br/>Note that some preferences don't take effect until you restart the Uniform Maker.
+		</div><br>
+		<table class="prefs" style="width:100%;">
+			<tr>
+				<td><center>
+					<input type="checkbox" id="checkForUpdatesPref" checked>&nbsp;Check for Updates on Startup
+				</center></td>
+				<td><center>
+					<input type="checkbox" id="gridsVisible" checked>&nbsp;Grids & Guides Visible
+				</center></td>
+				<td><center>
+					<input type="checkbox" id="seamsVisibleOnDiffuse">&nbsp;Seams Visible on Diffuse Map
+				</center></td>
+				<td><center>
+					Preferred Color Format:&nbsp;
+					<select id="preferredColorFormat" class="preference">
+						<option value="hex">Hex</option>
+						<option value="rgb">RGB</option>
+						<option value="hsv">HSV</option>
+					</select>
+				</center></td>
+			</tr>
+		</table>
+		<br>
+		<table class="prefs" style="width:100%;">
+			<tr>
+				<td><center>
+					Jersey Texture:&nbsp;
+					<select id="preferredJerseyTexture" class="preference">
+						<option value="jersey_texture_default.png" selected>None</option>
+						<option value="jersey_texture_flannel.png">Flannel</option>
+						<option value="jersey_texture_mesh.png">Mesh</option>
+						<option value="jersey_texture_polyester.png">Polyester</option>
+						<option value="jersey_texture_leather.png">Leather</option>
+						<option value="jersey_texture_deft_canvas.png">Canvas (deft)</option>
+						<option value="jersey_texture_deft_gingham.png">Gingham (deft)</option>
+						<option value="jersey_texture_deft_herringbone.png">Herringbone (deft)</option>
+						<option value="jersey_texture_deft_hex.png">Hex (deft)</option>
+						<option value="jersey_texture_deft_mesh.png">Mesh (deft)</option>
+						<option value="jersey_texture_deft_mottled.png">Mottled (deft)</option>
+						<option value="jersey_texture_deft_polyester.png">Polyester (deft)</option>
+						<option value="jersey_texture_deft_snakeskin.png">Snake Skin (deft)</option>
+						<option value="jersey_texture_deft_wool.png">Wool (deft)</option>
+						<option value="jersey_texture_micropterus1.png">Micropterus58 #1</option>
+						<option value="jersey_texture_micropterus2.png">Micropterus58 #2</option>
+						<option value="jersey_texture_micropterus3.png">Micropterus58 #3</option>
+					</select>
+				</center></td>
+				<td><center>
+					Pants Texture:&nbsp;
+					<select id="preferredPantsTexture" class="preference">
+						<option value="pants_texture_default.png" selected>None</option>
+						<option value="pants_texture_flannel.png">Flannel</option>
+						<option value="pants_texture_mesh.png">Mesh</option>
+						<option value="pants_texture_polyester.png">Polyester</option>
+						<option value="pants_texture_leather.png">Leather</option>
+						<option value="pants_texture_deft_canvas.png">Canvas (deft)</option>
+						<option value="pants_texture_deft_gingham.png">Gingham (deft)</option>
+						<option value="pants_texture_deft_herringbone.png">Herringbone (deft)</option>
+						<option value="pants_texture_deft_hex.png">Hex (deft)</option>
+						<option value="pants_texture_deft_mesh.png">Mesh (deft)</option>
+						<option value="pants_texture_deft_mottled.png">Mottled (deft)</option>
+						<option value="pants_texture_deft_polyester.png">Polyester (deft)</option>
+						<option value="pants_texture_deft_snakeskin.png">Snake Skin (deft)</option>
+						<option value="pants_texture_deft_wool.png">Wool (deft)</option>
+						<option value="pants_texture_micropterus1.png">Micropterus58 #1</option>
+						<option value="pants_texture_micropterus2.png">Micropterus58 #2</option>
+						<option value="pants_texture_micropterus3.png">Micropterus58 #3</option>
+					</select>
+				</center></td>
+				<td><center>
+					Cap Texture:&nbsp;
+					<select id="preferredCapTexture" class="preference">
+						<option value="cap_texture_wool.png" selected>Wool</option>
+						<option value="cap_texture_gern44.png">Gern44</option>	
+						<option value="cap_texture_mottled.png">Mottled</option>
+						<option value="cap_texture_knit.png">Knit</option>
+						<option value="cap_texture_mesh.png">Mesh</option>
+						<option value="cap_texture_none.png">None</option>
+					</select>
+				</center></td>
+				<td><center>
+					Seam "Height":&nbsp;
+					<input type="number" id="preferredSeamOpacity" class="preference" min="1" max="100">
+				</center></td>
+				<td><center>
+					Height Map Brightness:&nbsp;
+					<input type="number" id="preferredHeightMapBrightness" class="preference" min="1" max="100">
+				</center></td>
+			</tr>
+		</table>
+		<br>
+		<table class="prefs" style="width:100%;">
+			<tr>
+				<td><center>
+					<label>Preferred Jersey Font:<br/></label>
+					<select id="preferredJerseyFont" class="preference fontPref">
+						<option data-image="./images/Acme.png" value="./fonts/Acme-Regular.ttf">Acme</option>
+						<option data-image="./images/All State.png" value="./fonts/all_state-webfont.ttf">All State</option>
+						<option data-image="./images/Athletic Gothic.png" value="./fonts/athletic_gothic-webfont.ttf">Athletic Gothic</option>
+						<option data-image="./images/Athletic Gothic Shadow.png" value="./fonts/athletic_gothic_shadow-webfont.ttf">Athletic Gothic Shadow</option>
+						<option data-image="./images/Beaverton Script.png" value="./fonts/beaverton_script-webfont.ttf">Beaverton Script</option>
+						<option data-image="./images/Berkshire Swash.png" value="./fonts/BerkshireSwash-Regular.ttf">Berkshire Swash</option>
+						<option data-image="./images/CantoraOne.png" value="./fonts/CantoraOne-Regular.ttf">CantoraOne</option>
+						<option data-image="./images/Caxton Roman.png" value="./fonts/caxton_roman-webfont.ttf">Caxton Roman</option>
+						<option data-image="./images/Chela One.png" value="./fonts/ChelaOne-Regular.ttf">Chela</option>
+						<option data-image="./images/Russell Circus.png" value="./fonts/circus-webfont.ttf">Russell Circus</option>
+						<option data-image="./images/Condiment.png" value="./fonts/Condiment-Regular.ttf">Condiment</option>
+						<option data-image="./images/Cookie.png" value="./fonts/Cookie-Regular.ttf">Cookie</option>
+						<option data-image="./images/Courgette.png" value="./fonts/Courgette-Regular.ttf">Courgette</option>
+						<option data-image="./images/Croissant One.png" value="./fonts/CroissantOne-Regular.ttf">Croissant</option>
+						<option data-image="./images/Damion.png" value="./fonts/Damion-Regular.ttf">Damion</option>
+						<option data-image="./images/Engagement.png" value="./fonts/Engagement-Regular.ttf">Engagement</option>
+						<option data-image="./images/Germania One.png" value="./fonts/GermaniaOne-Regular.ttf">Germania</option>
+						<option data-image="./images/Graduate.png" value="./fonts/Graduate-Regular.ttf">Graduate</option>
+						<option data-image="./images/Grand Hotel.png" value="./fonts/GrandHotel-Regular.ttf">Grand Hotel</option>
+						<option data-image="./images/Jockey One.png" value="./fonts/JockeyOne-Regular.ttf">Jockey</option>
+						<option data-image="./images/Kaushan Script.png" value="./fonts/KaushanScript-Regular.ttf">Kaushan Script</option>
+						<option data-image="./images/Leckerli One.png" value="./fonts/LeckerliOne-Regular.ttf">Leckerli</option>
+						<option data-image="./images/Lily Script One.png" value="./fonts/LilyScriptOne-Regular.ttf">Lily Script</option>
+						<option data-image="./images/Lobster.png" value="./fonts/Lobster-Regular.ttf">Lobster</option>
+						<option data-image="./images/Lobster Two.png" value="./fonts/LobsterTwo-Regular.ttf">Lobster Two</option>
+						<option data-image="./images/Metal Mania.png" value="./fonts/MetalMania-Regular.ttf">Metal Mania</option>
+						<option data-image="./images/Miniver.png" value="./fonts/Miniver-Regular.ttf">Miniver</option>
+						<option data-image="./images/MLB Block.png" value="./fonts/MLBBlock.ttf">MLB Block</option>
+						<option data-image="./images/MLB Cubs.png" value="./fonts/MLBCubs.ttf">MLB Chicago N</option>
+						<option data-image="./images/MLB Red Sox.png" value="./fonts/MLBRedSox.ttf">McAuliffe</option>
+						<option data-image="./images/Molle.png" value="./fonts/Molle-Regular.ttf">Molle</option>
+						<option data-image="./images/New Rocker.png" value="./fonts/NewRocker-Regular.ttf">New Rocker</option>
+						<option data-image="./images/Norican.png" value="./fonts/Norican-Regular.ttf">Norican</option>
+						<option data-image="./images/Oleo Script.png" value="./fonts/OleoScript-Regular.ttf">Oleo Script</option>
+						<option data-image="./images/Pacifico.png" value="./fonts/Pacifico.ttf">Pacifico</option>
+						<option data-image="./images/Pirata One.png" value="./fonts/PirataOne-Regular.ttf">Pirata</option>
+						<option data-image="./images/Playball.png" value="./fonts/Playball-Regular.ttf">Playball</option>
+						<option data-image="./images/Pro Full Block.png" value="./fonts/pro_full_block-webfont.ttf">Pro Full Block</option>
+						<option data-image="./images/Quicksand.png" value="./fonts/Quicksand-Regular.ttf">Quicksand</option>
+						<option data-image="./images/Rubik Mono One.png" value="./fonts/RubikMonoOne-Regular.ttf">Rubik Mono</option>
+						<option data-image="./images/Rubik One.png" value="./fonts/RubikOne-Regular.ttf">Rubik</option>
+						<option data-image="./images/Rum Raisin.png" value="./fonts/RumRaisin-Regular.ttf">Rum Raisin</option>
+						<option data-image="./images/Satisfy.png" value="./fonts/Satisfy-Regular.ttf">Satisfy</option>
+						<option data-image="./images/Seymour One.png" value="./fonts/SeymourOne-Regular.ttf">Seymour</option>
+						<option data-image="./images/UA Tiffany.png" value="./fonts/tiffany-webfont.ttf">Tiffany</option>
+						<option data-image="./images/Trade Winds.png" value="./fonts/TradeWinds-Regular.ttf">Trade Winds</option>
+						<option data-image="./images/Kansas.png" value="./fonts/tuscan-webfont.ttf">Kansas</option>
+						<option data-image="./images/UnifrakturCook.png" value="./fonts/UnifrakturCook-Bold.ttf">Unifraktur Cook</option>
+						<option data-image="./images/UnifrakturMaguntia.png" value="./fonts/UnifrakturMaguntia-Book.ttf">Unifraktur Maguntia</option>
+						<option data-image="./images/Varsity Block C.png" value="./fonts/VarsityBlockC.ttf">Varsity Block C</option>
+						<option data-image="./images/Varsity Classic Serif A.png" value="./fonts/VarsityClassicSerifA.ttf">Varsity Classic Serif A</option>
+						<option data-image="./images/Varsity Classic Serif B.png" value="./fonts/VarsityClassicSerifB.ttf">Varsity Classic Serif B</option>
+						<option data-image="./images/Vibur.png" value="./fonts/Vibur-Regular.ttf">Vibur</option>
+						<option data-image="./images/Viga.png" value="./fonts/Viga-Regular.ttf">Viga</option>
+						<option data-image="./images/Wellfleet.png" value="./fonts/Wellfleet-Regular.ttf">Wellfleet</option>
+						<option data-image="./images/Wendy One.png" value="./fonts/WendyOne-Regular.ttf">Wendy</option>
+						<option data-image="./images/Yellowtail.png" value="./fonts/Yellowtail-Regular.ttf">Yellowtail</option>
+						<option data-image="./images/Rawlings Fancy Block.png" value="./fonts/rawlingsfancyblock-regular-webfont.ttf">Fancy Block</option>
+						<option data-image="./images/Rawlings Old English.png" value="./fonts/rawlingsoldenglish-webfont.ttf">Old English</option>
+						<option data-image="./images/Richardson Fancy Block.png" value="./fonts/richardson_fancy_block-webfont.ttf">Fancy Block 2</option>
+						<option data-image="./images/SPL28Script.png" value="./fonts/spl28script-webfont.ttf">SPL Script</option>
+						<option data-image="./images/VarsityClassicD.png" value="./fonts/VarsityClassicD.ttf">Varsity Classic D</option>
+						<option data-image="./images/VarsityBlockA.png" value="./fonts/VarsityBlockA.ttf">Varsity Block A</option>
+						<option data-image="./images/VarsityBlockB.png" value="./fonts/VarsityBlockB.ttf">Varsity Block B</option>
+						<option data-image="./images/VarsityBlockD.png" value="./fonts/VarsityBlockD.ttf">Varsity Block D</option>
+						<option data-image="./images/VarsityClassicA.png" value="./fonts/VarsityClassicA.ttf">Varsity Classic A</option>
+						<option data-image="./images/VarsityClassicB.png" value="./fonts/VarsityClassicB.ttf">Varsity Classic B</option>
+						<option data-image="./images/VarsityClassicC.png" value="./fonts/VarsityClassicC.ttf">Varsity Classic C</option>
+					</select>
+				</center></td>
+				<td><center>
+					<label>Preferred Cap Font:<br/></label>
+					<select id="preferredCapFont" class="preference fontPref">
+						<option data-image="./images/Acme.png" value="./fonts/Acme-Regular.ttf">Acme</option>
+						<option data-image="./images/All State.png" value="./fonts/all_state-webfont.ttf">All State</option>
+						<option data-image="./images/Athletic Gothic.png" value="./fonts/athletic_gothic-webfont.ttf">Athletic Gothic</option>
+						<option data-image="./images/Athletic Gothic Shadow.png" value="./fonts/athletic_gothic_shadow-webfont.ttf">Athletic Gothic Shadow</option>
+						<option data-image="./images/Beaverton Script.png" value="./fonts/beaverton_script-webfont.ttf">Beaverton Script</option>
+						<option data-image="./images/Berkshire Swash.png" value="./fonts/BerkshireSwash-Regular.ttf">Berkshire Swash</option>
+						<option data-image="./images/CantoraOne.png" value="./fonts/CantoraOne-Regular.ttf">CantoraOne</option>
+						<option data-image="./images/Caxton Roman.png" value="./fonts/caxton_roman-webfont.ttf">Caxton Roman</option>
+						<option data-image="./images/Chela One.png" value="./fonts/ChelaOne-Regular.ttf">Chela</option>
+						<option data-image="./images/Russell Circus.png" value="./fonts/circus-webfont.ttf">Russell Circus</option>
+						<option data-image="./images/Condiment.png" value="./fonts/Condiment-Regular.ttf">Condiment</option>
+						<option data-image="./images/Cookie.png" value="./fonts/Cookie-Regular.ttf">Cookie</option>
+						<option data-image="./images/Courgette.png" value="./fonts/Courgette-Regular.ttf">Courgette</option>
+						<option data-image="./images/Croissant One.png" value="./fonts/CroissantOne-Regular.ttf">Croissant</option>
+						<option data-image="./images/Damion.png" value="./fonts/Damion-Regular.ttf">Damion</option>
+						<option data-image="./images/Engagement.png" value="./fonts/Engagement-Regular.ttf">Engagement</option>
+						<option data-image="./images/Germania One.png" value="./fonts/GermaniaOne-Regular.ttf">Germania</option>
+						<option data-image="./images/Graduate.png" value="./fonts/Graduate-Regular.ttf">Graduate</option>
+						<option data-image="./images/Grand Hotel.png" value="./fonts/GrandHotel-Regular.ttf">Grand Hotel</option>
+						<option data-image="./images/Jockey One.png" value="./fonts/JockeyOne-Regular.ttf">Jockey</option>
+						<option data-image="./images/Kaushan Script.png" value="./fonts/KaushanScript-Regular.ttf">Kaushan Script</option>
+						<option data-image="./images/Leckerli One.png" value="./fonts/LeckerliOne-Regular.ttf">Leckerli</option>
+						<option data-image="./images/Lily Script One.png" value="./fonts/LilyScriptOne-Regular.ttf">Lily Script</option>
+						<option data-image="./images/Lobster.png" value="./fonts/Lobster-Regular.ttf">Lobster</option>
+						<option data-image="./images/Lobster Two.png" value="./fonts/LobsterTwo-Regular.ttf">Lobster Two</option>
+						<option data-image="./images/Metal Mania.png" value="./fonts/MetalMania-Regular.ttf">Metal Mania</option>
+						<option data-image="./images/Miniver.png" value="./fonts/Miniver-Regular.ttf">Miniver</option>
+						<option data-image="./images/MLB Block.png" value="./fonts/MLBBlock.ttf">MLB Block</option>
+						<option data-image="./images/MLB Cubs.png" value="./fonts/MLBCubs.ttf">MLB Chicago N</option>
+						<option data-image="./images/MLB Red Sox.png" value="./fonts/MLBRedSox.ttf">McAuliffe</option>
+						<option data-image="./images/Molle.png" value="./fonts/Molle-Regular.ttf">Molle</option>
+						<option data-image="./images/New Rocker.png" value="./fonts/NewRocker-Regular.ttf">New Rocker</option>
+						<option data-image="./images/Norican.png" value="./fonts/Norican-Regular.ttf">Norican</option>
+						<option data-image="./images/Oleo Script.png" value="./fonts/OleoScript-Regular.ttf">Oleo Script</option>
+						<option data-image="./images/Pacifico.png" value="./fonts/Pacifico.ttf">Pacifico</option>
+						<option data-image="./images/Pirata One.png" value="./fonts/PirataOne-Regular.ttf">Pirata</option>
+						<option data-image="./images/Playball.png" value="./fonts/Playball-Regular.ttf">Playball</option>
+						<option data-image="./images/Pro Full Block.png" value="./fonts/pro_full_block-webfont.ttf">Pro Full Block</option>
+						<option data-image="./images/Quicksand.png" value="./fonts/Quicksand-Regular.ttf">Quicksand</option>
+						<option data-image="./images/Rubik Mono One.png" value="./fonts/RubikMonoOne-Regular.ttf">Rubik Mono</option>
+						<option data-image="./images/Rubik One.png" value="./fonts/RubikOne-Regular.ttf">Rubik</option>
+						<option data-image="./images/Rum Raisin.png" value="./fonts/RumRaisin-Regular.ttf">Rum Raisin</option>
+						<option data-image="./images/Satisfy.png" value="./fonts/Satisfy-Regular.ttf">Satisfy</option>
+						<option data-image="./images/Seymour One.png" value="./fonts/SeymourOne-Regular.ttf">Seymour</option>
+						<option data-image="./images/UA Tiffany.png" value="./fonts/tiffany-webfont.ttf">Tiffany</option>
+						<option data-image="./images/Trade Winds.png" value="./fonts/TradeWinds-Regular.ttf">Trade Winds</option>
+						<option data-image="./images/Kansas.png" value="./fonts/tuscan-webfont.ttf">Kansas</option>
+						<option data-image="./images/UnifrakturCook.png" value="./fonts/UnifrakturCook-Bold.ttf">Unifraktur Cook</option>
+						<option data-image="./images/UnifrakturMaguntia.png" value="./fonts/UnifrakturMaguntia-Book.ttf">Unifraktur Maguntia</option>
+						<option data-image="./images/Varsity Block C.png" value="./fonts/VarsityBlockC.ttf">Varsity Block C</option>
+						<option data-image="./images/Varsity Classic Serif A.png" value="./fonts/VarsityClassicSerifA.ttf">Varsity Classic Serif A</option>
+						<option data-image="./images/Varsity Classic Serif B.png" value="./fonts/VarsityClassicSerifB.ttf">Varsity Classic Serif B</option>
+						<option data-image="./images/Vibur.png" value="./fonts/Vibur-Regular.ttf">Vibur</option>
+						<option data-image="./images/Viga.png" value="./fonts/Viga-Regular.ttf">Viga</option>
+						<option data-image="./images/Wellfleet.png" value="./fonts/Wellfleet-Regular.ttf">Wellfleet</option>
+						<option data-image="./images/Wendy One.png" value="./fonts/WendyOne-Regular.ttf">Wendy</option>
+						<option data-image="./images/Yellowtail.png" value="./fonts/Yellowtail-Regular.ttf">Yellowtail</option>
+						<option data-image="./images/Rawlings Fancy Block.png" value="./fonts/rawlingsfancyblock-regular-webfont.ttf">Fancy Block</option>
+						<option data-image="./images/Rawlings Old English.png" value="./fonts/rawlingsoldenglish-webfont.ttf">Old English</option>
+						<option data-image="./images/Richardson Fancy Block.png" value="./fonts/richardson_fancy_block-webfont.ttf">Fancy Block 2</option>
+						<option data-image="./images/SPL28Script.png" value="./fonts/spl28script-webfont.ttf">SPL Script</option>
+						<option data-image="./images/VarsityClassicD.png" value="./fonts/VarsityClassicD.ttf">Varsity Classic D</option>
+						<option data-image="./images/VarsityBlockA.png" value="./fonts/VarsityBlockA.ttf">Varsity Block A</option>
+						<option data-image="./images/VarsityBlockB.png" value="./fonts/VarsityBlockB.ttf">Varsity Block B</option>
+						<option data-image="./images/VarsityBlockD.png" value="./fonts/VarsityBlockD.ttf">Varsity Block D</option>
+						<option data-image="./images/VarsityClassicA.png" value="./fonts/VarsityClassicA.ttf">Varsity Classic A</option>
+						<option data-image="./images/VarsityClassicB.png" value="./fonts/VarsityClassicB.ttf">Varsity Classic B</option>
+						<option data-image="./images/VarsityClassicC.png" value="./fonts/VarsityClassicC.ttf">Varsity Classic C</option>
+					</select>
+				</center></td>
+			</tr>
+		</table>
+		<table class="prefs" style="width:100%;">
+			<tr></tr>
+				<td><center>
+					<label>Preferred Name Font:<br/></label>
+					<select id="preferredNameFont" class="preference fontPref">
+						<option data-image="./images/Acme.png" value="./fonts/Acme-Regular.ttf">Acme</option>
+						<option data-image="./images/All State.png" value="./fonts/all_state-webfont.ttf">All State</option>
+						<option data-image="./images/Athletic Gothic.png" value="./fonts/athletic_gothic-webfont.ttf">Athletic Gothic</option>
+						<option data-image="./images/Athletic Gothic Shadow.png" value="./fonts/athletic_gothic_shadow-webfont.ttf">Athletic Gothic Shadow</option>
+						<option data-image="./images/Beaverton Script.png" value="./fonts/beaverton_script-webfont.ttf">Beaverton Script</option>
+						<option data-image="./images/Berkshire Swash.png" value="./fonts/BerkshireSwash-Regular.ttf">Berkshire Swash</option>
+						<option data-image="./images/CantoraOne.png" value="./fonts/CantoraOne-Regular.ttf">CantoraOne</option>
+						<option data-image="./images/Caxton Roman.png" value="./fonts/caxton_roman-webfont.ttf">Caxton Roman</option>
+						<option data-image="./images/Chela One.png" value="./fonts/ChelaOne-Regular.ttf">Chela</option>
+						<option data-image="./images/Russell Circus.png" value="./fonts/circus-webfont.ttf">Russell Circus</option>
+						<option data-image="./images/Condiment.png" value="./fonts/Condiment-Regular.ttf">Condiment</option>
+						<option data-image="./images/Cookie.png" value="./fonts/Cookie-Regular.ttf">Cookie</option>
+						<option data-image="./images/Courgette.png" value="./fonts/Courgette-Regular.ttf">Courgette</option>
+						<option data-image="./images/Croissant One.png" value="./fonts/CroissantOne-Regular.ttf">Croissant</option>
+						<option data-image="./images/Damion.png" value="./fonts/Damion-Regular.ttf">Damion</option>
+						<option data-image="./images/Engagement.png" value="./fonts/Engagement-Regular.ttf">Engagement</option>
+						<option data-image="./images/Germania One.png" value="./fonts/GermaniaOne-Regular.ttf">Germania</option>
+						<option data-image="./images/Graduate.png" value="./fonts/Graduate-Regular.ttf">Graduate</option>
+						<option data-image="./images/Grand Hotel.png" value="./fonts/GrandHotel-Regular.ttf">Grand Hotel</option>
+						<option data-image="./images/Jockey One.png" value="./fonts/JockeyOne-Regular.ttf">Jockey</option>
+						<option data-image="./images/Kaushan Script.png" value="./fonts/KaushanScript-Regular.ttf">Kaushan Script</option>
+						<option data-image="./images/Leckerli One.png" value="./fonts/LeckerliOne-Regular.ttf">Leckerli</option>
+						<option data-image="./images/Lily Script One.png" value="./fonts/LilyScriptOne-Regular.ttf">Lily Script</option>
+						<option data-image="./images/Lobster.png" value="./fonts/Lobster-Regular.ttf">Lobster</option>
+						<option data-image="./images/Lobster Two.png" value="./fonts/LobsterTwo-Regular.ttf">Lobster Two</option>
+						<option data-image="./images/Metal Mania.png" value="./fonts/MetalMania-Regular.ttf">Metal Mania</option>
+						<option data-image="./images/Miniver.png" value="./fonts/Miniver-Regular.ttf">Miniver</option>
+						<option data-image="./images/MLB Block.png" value="./fonts/MLBBlock.ttf">MLB Block</option>
+						<option data-image="./images/MLB Cubs.png" value="./fonts/MLBCubs.ttf">MLB Chicago N</option>
+						<option data-image="./images/MLB Red Sox.png" value="./fonts/MLBRedSox.ttf">McAuliffe</option>
+						<option data-image="./images/Molle.png" value="./fonts/Molle-Regular.ttf">Molle</option>
+						<option data-image="./images/New Rocker.png" value="./fonts/NewRocker-Regular.ttf">New Rocker</option>
+						<option data-image="./images/Norican.png" value="./fonts/Norican-Regular.ttf">Norican</option>
+						<option data-image="./images/Oleo Script.png" value="./fonts/OleoScript-Regular.ttf">Oleo Script</option>
+						<option data-image="./images/Pacifico.png" value="./fonts/Pacifico.ttf">Pacifico</option>
+						<option data-image="./images/Pirata One.png" value="./fonts/PirataOne-Regular.ttf">Pirata</option>
+						<option data-image="./images/Playball.png" value="./fonts/Playball-Regular.ttf">Playball</option>
+						<option data-image="./images/Pro Full Block.png" value="./fonts/pro_full_block-webfont.ttf">Pro Full Block</option>
+						<option data-image="./images/Quicksand.png" value="./fonts/Quicksand-Regular.ttf">Quicksand</option>
+						<option data-image="./images/Rubik Mono One.png" value="./fonts/RubikMonoOne-Regular.ttf">Rubik Mono</option>
+						<option data-image="./images/Rubik One.png" value="./fonts/RubikOne-Regular.ttf">Rubik</option>
+						<option data-image="./images/Rum Raisin.png" value="./fonts/RumRaisin-Regular.ttf">Rum Raisin</option>
+						<option data-image="./images/Satisfy.png" value="./fonts/Satisfy-Regular.ttf">Satisfy</option>
+						<option data-image="./images/Seymour One.png" value="./fonts/SeymourOne-Regular.ttf">Seymour</option>
+						<option data-image="./images/UA Tiffany.png" value="./fonts/tiffany-webfont.ttf">Tiffany</option>
+						<option data-image="./images/Trade Winds.png" value="./fonts/TradeWinds-Regular.ttf">Trade Winds</option>
+						<option data-image="./images/Kansas.png" value="./fonts/tuscan-webfont.ttf">Kansas</option>
+						<option data-image="./images/UnifrakturCook.png" value="./fonts/UnifrakturCook-Bold.ttf">Unifraktur Cook</option>
+						<option data-image="./images/UnifrakturMaguntia.png" value="./fonts/UnifrakturMaguntia-Book.ttf">Unifraktur Maguntia</option>
+						<option data-image="./images/Varsity Block C.png" value="./fonts/VarsityBlockC.ttf">Varsity Block C</option>
+						<option data-image="./images/Varsity Classic Serif A.png" value="./fonts/VarsityClassicSerifA.ttf">Varsity Classic Serif A</option>
+						<option data-image="./images/Varsity Classic Serif B.png" value="./fonts/VarsityClassicSerifB.ttf">Varsity Classic Serif B</option>
+						<option data-image="./images/Vibur.png" value="./fonts/Vibur-Regular.ttf">Vibur</option>
+						<option data-image="./images/Viga.png" value="./fonts/Viga-Regular.ttf">Viga</option>
+						<option data-image="./images/Wellfleet.png" value="./fonts/Wellfleet-Regular.ttf">Wellfleet</option>
+						<option data-image="./images/Wendy One.png" value="./fonts/WendyOne-Regular.ttf">Wendy</option>
+						<option data-image="./images/Yellowtail.png" value="./fonts/Yellowtail-Regular.ttf">Yellowtail</option>
+						<option data-image="./images/Rawlings Fancy Block.png" value="./fonts/rawlingsfancyblock-regular-webfont.ttf">Fancy Block</option>
+						<option data-image="./images/Rawlings Old English.png" value="./fonts/rawlingsoldenglish-webfont.ttf">Old English</option>
+						<option data-image="./images/Richardson Fancy Block.png" value="./fonts/richardson_fancy_block-webfont.ttf">Fancy Block 2</option>
+						<option data-image="./images/SPL28Script.png" value="./fonts/spl28script-webfont.ttf">SPL Script</option>
+						<option data-image="./images/VarsityClassicD.png" value="./fonts/VarsityClassicD.ttf">Varsity Classic D</option>
+						<option data-image="./images/VarsityBlockA.png" value="./fonts/VarsityBlockA.ttf">Varsity Block A</option>
+						<option data-image="./images/VarsityBlockB.png" value="./fonts/VarsityBlockB.ttf">Varsity Block B</option>
+						<option data-image="./images/VarsityBlockD.png" value="./fonts/VarsityBlockD.ttf">Varsity Block D</option>
+						<option data-image="./images/VarsityClassicA.png" value="./fonts/VarsityClassicA.ttf">Varsity Classic A</option>
+						<option data-image="./images/VarsityClassicB.png" value="./fonts/VarsityClassicB.ttf">Varsity Classic B</option>
+						<option data-image="./images/VarsityClassicC.png" value="./fonts/VarsityClassicC.ttf">Varsity Classic C</option>
+					</select>
+				</center></td>
+				<td><center>
+					<label>Preferred Number Font:<br/></label>
+					<select id="preferredNumberFont" class="preference fontPref">
+						<option data-image="./images/Acme.png" value="./fonts/Acme-Regular.ttf">Acme</option>
+						<option data-image="./images/All State.png" value="./fonts/all_state-webfont.ttf">All State</option>
+						<option data-image="./images/Athletic Gothic.png" value="./fonts/athletic_gothic-webfont.ttf">Athletic Gothic</option>
+						<option data-image="./images/Athletic Gothic Shadow.png" value="./fonts/athletic_gothic_shadow-webfont.ttf">Athletic Gothic Shadow</option>
+						<option data-image="./images/Beaverton Script.png" value="./fonts/beaverton_script-webfont.ttf">Beaverton Script</option>
+						<option data-image="./images/Berkshire Swash.png" value="./fonts/BerkshireSwash-Regular.ttf">Berkshire Swash</option>
+						<option data-image="./images/CantoraOne.png" value="./fonts/CantoraOne-Regular.ttf">CantoraOne</option>
+						<option data-image="./images/Caxton Roman.png" value="./fonts/caxton_roman-webfont.ttf">Caxton Roman</option>
+						<option data-image="./images/Chela One.png" value="./fonts/ChelaOne-Regular.ttf">Chela</option>
+						<option data-image="./images/Russell Circus.png" value="./fonts/circus-webfont.ttf">Russell Circus</option>
+						<option data-image="./images/Condiment.png" value="./fonts/Condiment-Regular.ttf">Condiment</option>
+						<option data-image="./images/Cookie.png" value="./fonts/Cookie-Regular.ttf">Cookie</option>
+						<option data-image="./images/Courgette.png" value="./fonts/Courgette-Regular.ttf">Courgette</option>
+						<option data-image="./images/Croissant One.png" value="./fonts/CroissantOne-Regular.ttf">Croissant</option>
+						<option data-image="./images/Damion.png" value="./fonts/Damion-Regular.ttf">Damion</option>
+						<option data-image="./images/Engagement.png" value="./fonts/Engagement-Regular.ttf">Engagement</option>
+						<option data-image="./images/Germania One.png" value="./fonts/GermaniaOne-Regular.ttf">Germania</option>
+						<option data-image="./images/Graduate.png" value="./fonts/Graduate-Regular.ttf">Graduate</option>
+						<option data-image="./images/Grand Hotel.png" value="./fonts/GrandHotel-Regular.ttf">Grand Hotel</option>
+						<option data-image="./images/Jockey One.png" value="./fonts/JockeyOne-Regular.ttf">Jockey</option>
+						<option data-image="./images/Kaushan Script.png" value="./fonts/KaushanScript-Regular.ttf">Kaushan Script</option>
+						<option data-image="./images/Leckerli One.png" value="./fonts/LeckerliOne-Regular.ttf">Leckerli</option>
+						<option data-image="./images/Lily Script One.png" value="./fonts/LilyScriptOne-Regular.ttf">Lily Script</option>
+						<option data-image="./images/Lobster.png" value="./fonts/Lobster-Regular.ttf">Lobster</option>
+						<option data-image="./images/Lobster Two.png" value="./fonts/LobsterTwo-Regular.ttf">Lobster Two</option>
+						<option data-image="./images/Metal Mania.png" value="./fonts/MetalMania-Regular.ttf">Metal Mania</option>
+						<option data-image="./images/Miniver.png" value="./fonts/Miniver-Regular.ttf">Miniver</option>
+						<option data-image="./images/MLB Block.png" value="./fonts/MLBBlock.ttf">MLB Block</option>
+						<option data-image="./images/MLB Cubs.png" value="./fonts/MLBCubs.ttf">MLB Chicago N</option>
+						<option data-image="./images/MLB Red Sox.png" value="./fonts/MLBRedSox.ttf">McAuliffe</option>
+						<option data-image="./images/Molle.png" value="./fonts/Molle-Regular.ttf">Molle</option>
+						<option data-image="./images/New Rocker.png" value="./fonts/NewRocker-Regular.ttf">New Rocker</option>
+						<option data-image="./images/Norican.png" value="./fonts/Norican-Regular.ttf">Norican</option>
+						<option data-image="./images/Oleo Script.png" value="./fonts/OleoScript-Regular.ttf">Oleo Script</option>
+						<option data-image="./images/Pacifico.png" value="./fonts/Pacifico.ttf">Pacifico</option>
+						<option data-image="./images/Pirata One.png" value="./fonts/PirataOne-Regular.ttf">Pirata</option>
+						<option data-image="./images/Playball.png" value="./fonts/Playball-Regular.ttf">Playball</option>
+						<option data-image="./images/Pro Full Block.png" value="./fonts/pro_full_block-webfont.ttf">Pro Full Block</option>
+						<option data-image="./images/Quicksand.png" value="./fonts/Quicksand-Regular.ttf">Quicksand</option>
+						<option data-image="./images/Rubik Mono One.png" value="./fonts/RubikMonoOne-Regular.ttf">Rubik Mono</option>
+						<option data-image="./images/Rubik One.png" value="./fonts/RubikOne-Regular.ttf">Rubik</option>
+						<option data-image="./images/Rum Raisin.png" value="./fonts/RumRaisin-Regular.ttf">Rum Raisin</option>
+						<option data-image="./images/Satisfy.png" value="./fonts/Satisfy-Regular.ttf">Satisfy</option>
+						<option data-image="./images/Seymour One.png" value="./fonts/SeymourOne-Regular.ttf">Seymour</option>
+						<option data-image="./images/UA Tiffany.png" value="./fonts/tiffany-webfont.ttf">Tiffany</option>
+						<option data-image="./images/Trade Winds.png" value="./fonts/TradeWinds-Regular.ttf">Trade Winds</option>
+						<option data-image="./images/Kansas.png" value="./fonts/tuscan-webfont.ttf">Kansas</option>
+						<option data-image="./images/UnifrakturCook.png" value="./fonts/UnifrakturCook-Bold.ttf">Unifraktur Cook</option>
+						<option data-image="./images/UnifrakturMaguntia.png" value="./fonts/UnifrakturMaguntia-Book.ttf">Unifraktur Maguntia</option>
+						<option data-image="./images/Varsity Block C.png" value="./fonts/VarsityBlockC.ttf">Varsity Block C</option>
+						<option data-image="./images/Varsity Classic Serif A.png" value="./fonts/VarsityClassicSerifA.ttf">Varsity Classic Serif A</option>
+						<option data-image="./images/Varsity Classic Serif B.png" value="./fonts/VarsityClassicSerifB.ttf">Varsity Classic Serif B</option>
+						<option data-image="./images/Vibur.png" value="./fonts/Vibur-Regular.ttf">Vibur</option>
+						<option data-image="./images/Viga.png" value="./fonts/Viga-Regular.ttf">Viga</option>
+						<option data-image="./images/Wellfleet.png" value="./fonts/Wellfleet-Regular.ttf">Wellfleet</option>
+						<option data-image="./images/Wendy One.png" value="./fonts/WendyOne-Regular.ttf">Wendy</option>
+						<option data-image="./images/Yellowtail.png" value="./fonts/Yellowtail-Regular.ttf">Yellowtail</option>
+						<option data-image="./images/Rawlings Fancy Block.png" value="./fonts/rawlingsfancyblock-regular-webfont.ttf">Fancy Block</option>
+						<option data-image="./images/Rawlings Old English.png" value="./fonts/rawlingsoldenglish-webfont.ttf">Old English</option>
+						<option data-image="./images/Richardson Fancy Block.png" value="./fonts/richardson_fancy_block-webfont.ttf">Fancy Block 2</option>
+						<option data-image="./images/SPL28Script.png" value="./fonts/spl28script-webfont.ttf">SPL Script</option>
+						<option data-image="./images/VarsityClassicD.png" value="./fonts/VarsityClassicD.ttf">Varsity Classic D</option>
+						<option data-image="./images/VarsityBlockA.png" value="./fonts/VarsityBlockA.ttf">Varsity Block A</option>
+						<option data-image="./images/VarsityBlockB.png" value="./fonts/VarsityBlockB.ttf">Varsity Block B</option>
+						<option data-image="./images/VarsityBlockD.png" value="./fonts/VarsityBlockD.ttf">Varsity Block D</option>
+						<option data-image="./images/VarsityClassicA.png" value="./fonts/VarsityClassicA.ttf">Varsity Classic A</option>
+						<option data-image="./images/VarsityClassicB.png" value="./fonts/VarsityClassicB.ttf">Varsity Classic B</option>
+						<option data-image="./images/VarsityClassicC.png" value="./fonts/VarsityClassicC.ttf">Varsity Classic C</option>
+					</select>
+				</center></td>
+		</table>
+	</div>
 </div>
 </body>
 <script>
-	ipcRenderer.on('hide-imagemagick', (event, arg) => {
-		$(".imagemagick").each(function() {
-			$(this).css("display","none");
-		})
+	ipcRenderer.on("get-preferences-response", (event, data) => {
+		console.log($("#colorFormat").val())
+		console.log(data.preferredColorFormat)
+		$("#colorFormat").val(data.preferredColorFormat)
+		$("#defaultCrestSize").val(parseInt(data.preferredCrestSize))
+		console.log($("#colorFormat").val())
 	})
 
 	var spinnerOptions = {lines: 13, length: 28, width: 14, radius: 42, scale: 2, corners: 1, color: '#4283C7', opacity: 0.25, rotate: 0, direction: 1, speed: 1, trail: 60, fps: 20, zIndex: 2e9, className: 'spinner', top: '50%', left: '50%', shadow: false, hwaccel: false, position: 'absolute'}
@@ -743,6 +1145,7 @@
 	var mmAngle = 0;
 	
 	$(document).ready(function() {
+		ipcRenderer.send("get-preferences", null)
 		$(".accordion .accord-header").click(function() {
 			if($(this).next("div").is(":visible")){
 				$(this).next("div").slideUp("fast");
@@ -842,15 +1245,18 @@
 
 		sortFontDropdown()
 
-		ipcRenderer.send('imagemagick-warning', null)
 	});
 	
 	$("#colorFormat").on("change",function(e) {
-		$.localStorage.setItem('sweaterfactory.color_format', $(this).val());
+		ipcRenderer.send('set-preference', { pref: 'preferredColorFormat', value: $(this).val() })
 		$(".enabledSelector").spectrum("option", "preferredFormat", $(this).val());
 		$(".baseSelector").spectrum("option", "preferredFormat", $(this).val());
 		$(".undershirtSelector").spectrum("option", "preferredFormat", $(this).val());
 	});
+
+	$("#defaultCrestSize").on("change",function(e) {
+		ipcRenderer.send('set-preference', { pref: 'preferredCrestSize', value: parseInt($(this).val()) })
+	})
 
 	initializeCanvas();
 	
@@ -918,7 +1324,7 @@
 		type: "color",
 		showAlpha: false,
 		showInput: true,
-		preferredFormat: prefColorFormat,
+		preferredFormat: $("#colorFormat").val(),
 		showInitial: true,
 		showPalette: true,
 		showButtons: true,
@@ -948,7 +1354,7 @@
 		type: "color",
 		showAlpha: false,
 		showInput: true,
-		preferredFormat: prefColorFormat,
+		preferredFormat: $("#colorFormat").val(),
 		showInitial: true,
 		showPalette: true,
 		showButtons: true,
@@ -997,7 +1403,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1362,7 +1768,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1448,7 +1854,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1523,7 +1929,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1634,7 +2040,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1709,7 +2115,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1780,7 +2186,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			//preferredFormat: prefColorFormat,
+			//preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1819,7 +2225,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			//preferredFormat: prefColorFormat,
+			//preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1879,7 +2285,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1960,11 +2366,77 @@
 	})
 	
 	$("#fakeImageButton").on("click",function() {
+		showOverlay("Processing Image...")
 		ipcRenderer.send('upload-image', null)
 	})
 	
 	ipcRenderer.on('upload-image-response', (event, response) => {
 		addImage(response)
+	})
+
+	ipcRenderer.on('webp-convert', (event, response) => {
+		console.log(response)
+		const img = new Image();
+		img.onload = function() {
+			const tempCanvas = document.createElement('canvas');
+			const tempCtx = tempCanvas.getContext('2d');
+
+			tempCanvas.width = response.width;
+			tempCanvas.height = response.height;
+
+			tempCtx.drawImage(img, 0, 0);
+
+			let convertedImage = tempCanvas.toDataURL()
+
+			const imgObj = new Image()
+			imgObj.onload = function () {
+				let imLeft = 256
+				let imTop = (response.canvas == "jerseyLogoCanvas") ? 512 : 256
+				var image = new fabric.Image(imgObj);
+				image.set({
+					originX: 'center',
+					originY: 'center',
+					perPixelTargetFind: true,
+					centeredScaling: true,
+					centeredRotation: true,
+					name: response.file,
+					id: response.file
+				});
+				image.filters.push(new fabric.Image.filters.Resize({
+					resizeType: 'lanczos', // typo fixed
+					lanczosLobes: 2 // typo fixed
+				}));
+				image.on('object:modified',function() {
+					imLeft = image.get('left')
+					imTop = image.get('top');
+				})
+				image.on('selected',function() {
+					$("#fileName").html(image.get('id'));
+					if ($("#trimImageDiv").css("display") == "none") {
+						$("#trimImageDiv").css("display","block");
+						$("#uploadImageDiv").css("display","none");
+						$("#selectedImageDiv").css("display","block");
+					}
+					$("#tipSpan").html("Use Arrow keys to move image 1 pixel.<br>Use Shift + Arrow keys to move image 10 pixels.<br>Use Delete key to remove image.");
+					$(".copypaste").each(function() {
+						$(this).css("display","inline-block")
+					})
+				})
+				var h = image.height;
+				var w = image.width;
+				logoCanvas.add(image);
+				image.set({"left":256,"top":350});
+				image.setCoords();
+				logoCanvas.bringToFront(image)
+				logoCanvas.setActiveObject(image)
+				logoCanvas.requestRenderAll()
+				logoCanvas.renderAll();
+				tempCanvas.remove()
+				hideOverlay()
+			}
+			imgObj.src = convertedImage
+		}
+		img.src = response.path
 	})
 
 	function addImage(data) {
@@ -2013,7 +2485,7 @@
 			//}
 			logoCanvas.add(image);
 			image.sendBackwards();
-			
+			hideOverlay()
 			// end fabricJS stuff
 		}
 	}
@@ -2111,6 +2583,99 @@
 		let y = $(this).data("y");
 		let action = $(this).attr("id");
 		let color = $("#colorSquare").val();
+        if (canvas.getActiveObject()) {
+			var object = canvas.getActiveObject()
+			var idx = canvas.getObjects().indexOf(object)
+			if (object.get('type') == "image") {
+				$(colorSquare).removeClass("colorSquare").removeClass("colorSquareSelected");
+				let left = object.get("left");
+				let top = object.get("top");
+                let scaleX = object.get('scaleX')
+				let scaleY = object.get('scaleY')
+                let path = object.get('path')
+				let pictureName = object.get('name');
+				let theImage = object._originalElement.currentSrc;
+				let replacementColor = hexToRgb("#000000")
+				let x = 1
+				let y = 1
+				const img = new Image();
+				img.onload = function() {
+					const tempCanvas = document.createElement('canvas');
+					const tempCtx = tempCanvas.getContext('2d');
+
+					tempCanvas.width = img.width;
+					tempCanvas.height = img.height;
+
+					tempCtx.drawImage(img, 0, 0);
+
+					let color = GetColorPixel(tempCtx,1,1)
+
+					let hexColor = rgb2hex(color[0], color[1], color[2])
+
+					const canvas = document.createElement('canvas');
+					const ctx = canvas.getContext('2d');
+
+					canvas.width = img.width+20;
+					canvas.height = img.height+20;
+
+					ctx.fillStyle = hexColor;
+					ctx.fillRect(0,0, canvas.width,canvas.height);
+
+					ctx.drawImage(img, 10, 10);
+
+					const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+					const pixels = imageData.data;
+					const startIndex = (y * canvas.width + x) * 4;
+					const baseColor = {
+						r: pixels[startIndex],
+						g: pixels[startIndex + 1],
+						b: pixels[startIndex + 2],
+						a: pixels[startIndex + 3] // Get alpha channel value
+					};
+
+					const stack = [{ x: x, y: y }];
+
+					while (stack.length) {
+						const { x, y } = stack.pop();
+						const index = (y * canvas.width + x) * 4;
+
+						if (
+							x >= 0 && x < canvas.width &&
+							y >= 0 && y < canvas.height &&
+							isColorMatchAlpha(pixels, index, baseColor, replacementColor, fuzz)
+						) {
+							pixels[index] = replacementColor.r;
+							pixels[index + 1] = replacementColor.g;
+							pixels[index + 2] = replacementColor.b;
+							pixels[index + 3] = replacementColor.a; // Set alpha channel value
+
+							stack.push({ x: x + 1, y: y });
+							stack.push({ x: x - 1, y: y });
+							stack.push({ x: x, y: y + 1 });
+							stack.push({ x: x, y: y - 1 });
+						}
+					}
+
+					ctx.putImageData(imageData, 0, 0);
+
+					ipcRenderer.send('replace-color', [canvas.toDataURL(), left, top, scaleX, scaleY, action, color, null, null, pictureName, canvasName, x, y, colorSquare, null ])
+					//ipcRenderer.send('replace-color', {imgdata: canvas.toDataURL(), x: 0, y: 0, filename: pictureName, canvas: canvasName, pLeft: left, pTop: top, pScaleX: scaleX, scaleY: scaleY, pictureName: pictureName, path: path})
+				};
+				img.src = object._originalElement.currentSrc;
+                return false;
+			}
+		}
+	})
+
+	/* $("#makeTransparent").on("click",function(e) {
+        let canvas = logoCanvas
+        let canvasName = "logoCanvas"
+        let fuzz = parseInt($("#colorFuzz").val())
+        let colorSquare = "#colorSquare"
+		let x = $(this).data("x");
+		let y = $(this).data("y");
+		let action = $(this).attr("id");
+		let color = $("#colorSquare").val();
 		if (canvas.getActiveObject()) {
 			var object = canvas.getActiveObject()
 			var idx = canvas.getObjects().indexOf(object)
@@ -2131,8 +2696,8 @@
 				return false;
 			}
 		}
-	})
-	
+	}) */
+
 	$("#removeColorRange").on("click",function(e) {
 		var canvas = logoCanvas
         var canvasName = "logoCanvas"
@@ -2142,29 +2707,77 @@
 		var y = $(this).data("y");
 		var action = $(this).attr("id");
 		var color = $("#colorSquare").val();
+		var x = $(this).data("x");
+		var y = $(this).data("y");
+		var action = $(this).attr("id");
+		var replacementColor = hexToRgb("#000000")
 		if (canvas.getActiveObject()) {
 			var object = canvas.getActiveObject()
+			var pictureName = object.get('name')
 			var idx = canvas.getObjects().indexOf(object)
+			var pLeft = object.get('left')
+			var pTop = object.get('top')
+			var pScaleX = object.get('scaleX')
+			var pScaleY = object.get('scaleY')
+			var pX = x / pScaleX
+			var pY = y / pScaleY
+			var newcolor = null
 			if (object.get('type') == "image") {
-				//showOverlay("Processing Image...")
-				var pictureName = object.get('name');
-				var pLeft = object.get('left')
-				var pTop = object.get('top')
-				var pScaleX = object.get('scaleX')
-				var pScaleY = object.get('scaleY')
-				var pX = x / pScaleX
-				var pY = y / pScaleY
-                var path = object.get('path')
-				$(colorSquare).removeClass("colorSquare").removeClass("colorSquareSelected");
-				var theImage = object._originalElement.currentSrc;
-				theImage = theImage.substr(theImage.indexOf(',') + 1).toString();	
-				ipcRenderer.send('remove-color-range', {imgdata: theImage, x: pX, y: pY, color: color, action: action, fuzz: fuzz, filename: pictureName, canvas: canvasName, pLeft: pLeft, pTop: pTop, pScaleX: pScaleX, pScaleY: pScaleY, pictureName: pictureName, colorSquare: colorSquare, path: path})		
-				return false;
+				showOverlay("Processing Image...")
+				const img = new Image();
+				img.onload = function() {
+					const canvas = document.createElement('canvas');
+					const ctx = canvas.getContext('2d');
+
+					canvas.width = img.width;
+					canvas.height = img.height;
+
+					ctx.drawImage(img, 0, 0);
+
+					const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+					const pixels = imageData.data;
+					const startIndex = (y * canvas.width + x) * 4;
+					const baseColor = {
+						r: pixels[startIndex],
+						g: pixels[startIndex + 1],
+						b: pixels[startIndex + 2],
+						a: pixels[startIndex + 3] // Get alpha channel value
+					};
+
+					const stack = [{ x: x, y: y }];
+
+					while (stack.length) {
+						const { x, y } = stack.pop();
+						const index = (y * canvas.width + x) * 4;
+
+						if (
+							x >= 0 && x < canvas.width &&
+							y >= 0 && y < canvas.height &&
+							isColorMatchAlpha(pixels, index, baseColor, replacementColor, fuzz)
+						) {
+							pixels[index] = replacementColor.r;
+							pixels[index + 1] = replacementColor.g;
+							pixels[index + 2] = replacementColor.b;
+							pixels[index + 3] = replacementColor.a; // Set alpha channel value
+
+							stack.push({ x: x + 1, y: y });
+							stack.push({ x: x - 1, y: y });
+							stack.push({ x: x, y: y + 1 });
+							stack.push({ x: x, y: y - 1 });
+						}
+					}
+
+					ctx.putImageData(imageData, 0, 0);
+
+					//document.body.appendChild(canvas);
+					ipcRenderer.send('replace-color', [canvas.toDataURL(), pLeft, pTop, pScaleX, pScaleY, action, color, newcolor, fuzz, pictureName, canvasName, x, y, colorSquare, null ])
+				};
+				img.src = object._originalElement.currentSrc;
 			}
 		}
 	})
-
-    $("#removeAllColor").on("click",function(e) {
+	
+	$("#removeAllColor").on("click",function(e) {
 		var canvas = logoCanvas
         var canvasName = "logoCanvas"
         var fuzz = parseInt($("#colorFuzz").val());
@@ -2173,12 +2786,14 @@
 		var x = $(this).data("x");
 		var y = $(this).data("y");
 		var action = $(this).attr("id");
-		
+		var replacementColor = hexToRgb("#000000")
+		//color = hexToRgb(color)
+
 		if (canvas.getActiveObject()) {
 			var object = canvas.getActiveObject()
 			var idx = canvas.getObjects().indexOf(object)
 			if (object.get('type') == "image") {
-				//showOverlay("Processing Image...")
+				showOverlay("Processing Image...")
 				var pictureName = object.get('name');
 				var pLeft = object.get('left')
 				var pTop = object.get('top')
@@ -2186,12 +2801,43 @@
 				var pScaleY = object.get('scaleY')
 				var pX = x / pScaleX
 				var pY = y / pScaleY
-                var path = object.get('path')
-				$(colorSquare).removeClass("colorSquare").removeClass("colorSquareSelected");
-				var theImage = object._originalElement.currentSrc;
-				theImage = theImage.substr(theImage.indexOf(',') + 1).toString();
-				ipcRenderer.send('remove-all-color', {imgdata: theImage, x: pX, y: pY, color: color, action: action, fuzz: fuzz, filename: pictureName, canvas: canvasName, pLeft: pLeft, pTop: pTop, pScaleX: pScaleX, pScaleY: pScaleY, pictureName: pictureName, colorSquare: colorSquare, color: color, path: path})			
-				return false;
+				$(colorSquare).removeClass("colorSquareActive").removeClass("colorSquareSelected");
+				const img = new Image();
+				
+				img.onload = function() {
+					const canvas = document.createElement('canvas');
+					const ctx = canvas.getContext('2d');
+
+					canvas.width = img.width;
+					canvas.height = img.height;
+
+					ctx.drawImage(img, 0, 0);
+
+					const pixelData = ctx.getImageData(x, y, 1, 1).data; // Get pixel data at coordinates (x, y)
+					const color = { r: pixelData[0], g: pixelData[1], b: pixelData[2] }; // Extract RGB values from pixel data
+
+					const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+					const pixels = imageData.data;
+
+					for (let i = 0; i < pixels.length; i += 4) {
+						const r = pixels[i];
+						const g = pixels[i + 1];
+						const b = pixels[i + 2];
+						const a = pixels[i + 3];
+
+						if (isColorWithinTolerance({ r, g, b }, color, fuzz)) {
+							pixels[i] = replacementColor.r;
+							pixels[i + 1] = replacementColor.g;
+							pixels[i + 2] = replacementColor.b;
+							pixels[i + 3] = 0; // Set alpha channel to 0 for transparency
+						}
+					}
+
+					ctx.putImageData(imageData, 0, 0);
+
+					ipcRenderer.send('replace-color', [canvas.toDataURL(), pLeft, pTop, pScaleX, pScaleY, action, color, null, fuzz, pictureName, canvasName, x, y, colorSquare, null ])
+				};
+				img.src = object._originalElement.currentSrc;
 			}
 		}
 	})
@@ -2214,6 +2860,7 @@
 
 	$("#replaceColorSubmit").on("click",function(e) {
 		console.log("this one!")
+		console.log($(this).data("action"))
         var canvas = logoCanvas
         var canvasName = "logoCanvas"
         var fuzz = parseInt($("#colorFuzz").val());
@@ -2224,28 +2871,106 @@
 		var action = $(this).data("action");
 		var x = $(this).data("x");
 		var y = $(this).data("y");
+		newcolor = hexToRgb(newcolor)
 		if (canvas.getActiveObject()) {
 			var object = canvas.getActiveObject()
 			var idx = canvas.getObjects().indexOf(object)
 			if (object.get('type') == "image") {
-				//showOverlay("Processing Image...")
+				showOverlay("Processing Image...")
 				var pictureName = object.get('name');
-				$(colorSquare).removeClass("colorSquare").removeClass("colorSquareSelected");
+				$(colorSquare).removeClass("colorSquareActive").removeClass("colorSquareSelected");
 				
-				var theImage = object._originalElement.currentSrc;
-
 				var pLeft = object.get('left')
 				var pTop = object.get('top')
 				var pScaleX = object.get('scaleX')
 				var pScaleY = object.get('scaleY')
 				var pX = x / pScaleX
 				var pY = y / pScaleY
-                var path = object.get('path')
 
-				theImage = theImage.substr(theImage.indexOf(',') + 1).toString();
+				const img = new Image()
+				if (action.slice(-17) == "replaceColorRange") {	
+					img.onload = function() {
+						const canvas = document.createElement('canvas');
+						const ctx = canvas.getContext('2d');
 
-                ipcRenderer.send('replace-color', {imgdata: theImage, pLeft: pLeft, pTop: pTop, pScaleX: pScaleX, pScaleY: pScaleY, action: action, color: color, newcolor: newcolor, fuzz: fuzz, pictureName: pictureName, canvas: canvasName, x: x, y: y, colorSquare: colorSquare, newColorSquare: newColorSquare, path: path})
-			
+						canvas.width = img.width;
+						canvas.height = img.height;
+
+						ctx.drawImage(img, 0, 0);
+
+						const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+						const pixels = imageData.data;
+						const startIndex = (y * canvas.width + x) * 4;
+						const baseColor = {
+							r: pixels[startIndex],
+							g: pixels[startIndex + 1],
+							b: pixels[startIndex + 2]
+						};
+
+						const stack = [{ x: x, y: y }];
+
+						while (stack.length) {
+							const { x, y } = stack.pop();
+							const index = (y * canvas.width + x) * 4;
+
+							if (
+								x >= 0 && x < canvas.width &&
+								y >= 0 && y < canvas.height &&
+								isColorMatch(pixels, index, baseColor, color, fuzz)
+							) {
+								pixels[index] = newcolor.r;
+								pixels[index + 1] = newcolor.g;
+								pixels[index + 2] = newcolor.b;
+
+								stack.push({ x: x + 1, y: y });
+								stack.push({ x: x - 1, y: y });
+								stack.push({ x: x, y: y + 1 });
+								stack.push({ x: x, y: y - 1 });
+							}
+						}
+
+						ctx.putImageData(imageData, 0, 0);
+
+						ipcRenderer.send('replace-color', [canvas.toDataURL(), pLeft, pTop, pScaleX, pScaleY, action, color, newcolor, fuzz, pictureName, canvasName, x, y, colorSquare, newColorSquare ])
+					};
+					img.src = object._originalElement.currentSrc
+				} else {
+					img.onload = function() {
+						const canvas = document.createElement('canvas');
+						const ctx = canvas.getContext('2d');
+
+						canvas.width = img.width;
+						canvas.height = img.height;
+
+						ctx.drawImage(img, 0, 0);
+
+						const pixelData = ctx.getImageData(x, y, 1, 1).data; // Get pixel data at coordinates (x, y)
+						const color = { r: pixelData[0], g: pixelData[1], b: pixelData[2] }; // Extract RGB values from pixel data
+
+						// Continue with your existing code...
+						const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+						const pixels = imageData.data;
+
+						for (let i = 0; i < pixels.length; i += 4) {
+							const r = pixels[i];
+							const g = pixels[i + 1];
+							const b = pixels[i + 2];
+							const a = pixels[i + 3];
+
+							if (isColorWithinTolerance({ r, g, b }, color, fuzz)) {
+								pixels[i] = newcolor.r;
+								pixels[i + 1] = newcolor.g;
+								pixels[i + 2] = newcolor.b;
+							}
+						}
+
+						ctx.putImageData(imageData, 0, 0);
+
+						ipcRenderer.send('replace-color', [canvas.toDataURL(), pLeft, pTop, pScaleX, pScaleY, action, color, newcolor, fuzz, pictureName, canvasName, x, y, colorSquare, newColorSquare ])
+						return false;
+					}
+					img.src = object._originalElement.currentSrc;
+				}
 				return false;
 			}
 		}	
@@ -2306,23 +3031,45 @@
 	})
 
 	$("#strokeSubmit").on("click", function(e) {
-        if (logoCanvas.getActiveObject()) {
+		let canvas = logoCanvas
+        if (canvas.getActiveObject()) {
 			//showOverlay()
-			let object = logoCanvas.getActiveObject()
-			let idx = logoCanvas.getObjects().indexOf(object)
+			let object = canvas.getActiveObject()
+			let idx = canvas.getObjects().indexOf(object)
 			if (object.get('type') == "image") {
-				console.log(object)
 				let left = object.get("left");
 				let top = object.get("top");
                 let scaleX = object.get('scaleX')
 				let scaleY = object.get('scaleY')
                 let path = object.get('path')
 				let pictureName = object.get('name');
-				let theImage = object._originalElement.currentSrc;
-                let color = $("#strokeColor").spectrum("get").toHex().toLowerCase()
+				let color = "#"+$("#strokeColor").spectrum("get").toHex().toLowerCase()
                 let width = $("#strokeWidth").val()
-                theImage = theImage.substr(theImage.indexOf(',') + 1).toString();
-				ipcRenderer.send('add-stroke', {imgdata: theImage, left: left, top: top, scaleX: scaleX, scaleY: scaleY, path: path, pictureName: pictureName, color: color, width: width})
+				const x = parseInt(width) + 1, y = parseInt(width);
+				let image = new Image();
+				image.onload = function() {
+					const canvas = document.createElement('canvas');
+					canvas.width = image.width + x * 2
+					canvas.height = image.height + y * 2
+					
+					const ctx = canvas.getContext('2d');
+
+					for (let angle = 0; angle < 360; angle += 360 / 36) {
+						ctx.drawImage(
+							image,
+							width * Math.sin((Math.PI * 2 * angle) / 360) + x,
+							width * Math.cos((Math.PI * 2 * angle) / 360) + y
+						);
+					}
+					ctx.globalCompositeOperation = 'source-in';
+					ctx.fillStyle = color;
+					ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+					ctx.globalCompositeOperation = 'source-over';
+					ctx.drawImage(image, x, y);
+					ipcRenderer.send('add-stroke', {imgdata: canvas.toDataURL(), left: left, top: top, scaleX: scaleX, scaleY: scaleY, path: path, pictureName: pictureName, canvas: "logoCanvas"})
+				}
+				image.src = object._originalElement.currentSrc
 				return false;
 			}
 		}	
@@ -2331,7 +3078,7 @@
 	ipcRenderer.on('imagemagick-response', (event, response) => {
         if (response.status != "success") {
 			alert(response.message)
-			//hideOverlay()
+			hideOverlay()
 		} else {
 			let canvas = logoCanvas
 			let data = response.data
@@ -2348,7 +3095,7 @@
 			var imgObj = new Image();
 			imgObj.src = data;
 			imgObj.onload = function () {
-                var image = new fabric.Image(imgObj);
+				var image = new fabric.Image(imgObj);
 				image.set({
 					originX: 'center',
 					originY: 'center',
@@ -2392,12 +3139,12 @@
 				})
 				
 				canvas.remove(object);
-
 				canvas.add(image);
 				image.moveTo(idx);
 				canvas.renderAll();
 				imLeft = image.get('left')
 				imTop = image.get('top');
+				hideOverlay()
 			}
 		}
 	})
@@ -3884,7 +4631,7 @@
 						visible: false
 					});
 					below.add(camoLayer2);
-					below.moveTo(camoLayer2, 3);
+					below.moveTo(camoLayer2, 3);options
 					fabric.loadSVGFromURL('./images/fhm_digiCamoBase.svg',function(svg,options) {
 						digiCamoBase = new fabric.Group(svg,options);
 						digiCamoBase.setOptions ({
@@ -3969,6 +4716,13 @@
 	$("#aboutSweaterfactory").magnificPopup({
 		items: {
 			src: '#FAQ',
+			type: 'inline'
+		}
+	});
+
+	$("#prefsButton").magnificPopup({
+		items: {
+			src: '#prefs',
 			type: 'inline'
 		}
 	});
@@ -4433,20 +5187,25 @@
 		logoCanvas.renderAll();
 		hideOverlay()
 	})
+
+	$("#defaultCrestSize").on("change",function(e) {
+
+	})
 	
 	$("#makeCrest").on("click",function(e) {
 		showOverlay()	
+		const size = parseInt($("#defaultCrestSize").val())
 		var object = logoCanvas.getActiveObject();
 		if (object.get('type') == "image") {
 			var imageHeight = object.height;
 			var imageWidth = object.width;
-			if (imageHeight > imageWidth && imageHeight > 46) {
-				object.scaleToHeight(46);
-			} else if (imageWidth > imageHeight && imageWidth > 46) {
-				object.scaleToWidth(46);
+			if (imageHeight > imageWidth && imageHeight > size) {
+				object.scaleToHeight(size);
+			} else if (imageWidth > imageHeight && imageWidth > size) {
+				object.scaleToWidth(size);
 			} else {
-				if (imageWidth > 46) {
-					object.scaleToWidth(46);
+				if (imageWidth > size) {
+					object.scaleToWidth(size);
 				} 
 			}
 			object.set({"left":256,"top":341,"angle":0});
@@ -4458,6 +5217,160 @@
 	
 	$("#warpEffect").on("change",function(e) {
 		initializeWarp();
+	})
+
+	$("#warpAmount").on("change",function() {
+		var selected = $("#warpEffect").find('option:selected');
+		selected.data('value',$(this).val());
+		$("#warpAmountDisplay").val($(this).val());
+		const g = logoCanvas.getObjects('group').find(o => o.id === 'wordmark');
+		switch ($("#warpEffect").val()) {
+			case "none":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				g.set("skewX", 0)
+				g.set("skewY", 0)
+				logoCanvas.renderAll();
+				break;
+			case "skewUp":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*-45;
+				g.set("skewX", 0)
+				g.set("skewY", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewDown":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*45;
+				g.set("skewX", 0)
+				g.set("skewY", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewLeft":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*45;
+				g.set("skewY", 0)
+				g.set("skewX", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewRight":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*-45;
+				g.set("skewY", 0)
+				g.set("skewX", amount)
+				logoCanvas.renderAll();
+				break;
+			default:
+				g.set("skewX", 0)
+				g.set("skewY", 0)
+				logoCanvas.renderAll();
+				warpText();
+				break;
+		}	
+	})
+
+	$("#warpAmountDisplay").on("change",function() {
+		if (parseInt($(this).val()) < parseInt($(this).attr("min"))) {
+			$(this).val(parseInt($(this).attr("min")))
+		}
+		if (parseInt($(this).val()) > parseInt($(this).attr("max"))) {
+			$(this).val(parseInt($(this).attr("max")))
+		}
+		var selected = $("#warpEffect").find('option:selected');
+		selected.data('value',$(this).val());
+		$("#warpAmount").val($(this).val());
+		const g = logoCanvas.getObjects('group').find(o => o.id === 'wordmark');
+		switch ($("#warpEffect").val()) {
+			case "none":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				g.set("skewX", 0)
+				g.set("skewY", 0)
+				logoCanvas.renderAll();
+				break;
+			case "skewUp":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*-45;
+				g.set("skewX", 0)
+				g.set("skewY", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewDown":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*45;
+				g.set("skewX", 0)
+				g.set("skewY", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewLeft":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*45;
+				g.set("skewY", 0)
+				g.set("skewX", amount)
+				logoCanvas.renderAll();
+				break;
+			case "skewRight":
+				logoCanvas.getObjects('image').forEach(function(o) {
+					if (o.id == 'warpedText') {
+						logoCanvas.remove(o)
+					}
+				})
+				g.set("visible", true)
+				var amount = (parseInt($("#warpAmount").val())/100)*-45;
+				g.set("skewY", 0)
+				g.set("skewX", amount)
+				logoCanvas.renderAll();
+				break;
+			default:
+				g.set("skewX", 0)
+				g.set("skewY", 0)
+				logoCanvas.renderAll();
+				initializeWarp();
+				break;
+		}	
 	})
 	
 	function initializeWarp() {
@@ -4586,14 +5499,17 @@
 		wordmarkChange($("#fontTypeCombo").val(),false)
 	})	
 
+	$(".spacing").on("input",function(e) {
+		diagonalText()
+	})
+
 	$("#checkForUpdates").on("click", function() {
 		ipcRenderer.send('check-for-update', false)
 	})
-	
+
 	function diagonalText() {
 		const h = parseInt($("#hSpacing").val())
 		const v = parseInt($("#vSpacing").val())
-		const font = $("#jerseyWordmarkSelect").val()
 		var objects = logoCanvas.getObjects();
 		for (x in objects) {
 			if (objects[x].get('name') == "warpedText") {
@@ -4601,7 +5517,7 @@
 			}
 		}
 
-		opentype.load("./fonts/pro_full_block-webfont.ttf", (err,font) => {
+		opentype.load($("#fontTypeCombo").val(), (err,font) => {
 			if (err || !font) {
 				console.log(err)
 				return;
@@ -4795,7 +5711,6 @@
 	}
 
 	ipcRenderer.on("hide-overlay", (event, response) => {
-		console.log("hello world")
 		hideOverlay()
 	})
 
@@ -5087,19 +6002,28 @@
                 fontDropdown.refresh()
             } else {
 				fontList.push(data.fontName)
-				let tmpTxt = new fabric.IText("ABC 123",{
-					fontFamily: data.familyName,
-					fontSize: 96,
-					originX: 'center',
-					originY: 'center',
-					textAlign: 'center',
-					fill: 'black',
-					stroke: 'black',
-					originX: 'center',
-					originY: 'center',
+				opentype.load(data.fontPath, (err,font) => {
+					if (err || !font) {
+						console.log(err)
+						return;
+					}
+					
+					var thumbText = font.getPath("ABC 123", 0, 0, 96)
+					var outPath = thumbText.toPathData(5)
+
+					thumbText = new fabric.Path(outPath, {
+						left: 0,
+						originX: 'center',
+						originY: 'center',
+						centeredScaling: true,
+						centeredRotation: true,
+						fill: 'black',
+						height: '80px'
+					})
+
+					refreshDropdown(data,thumbText)
+					wordmarkChange(data,false)
 				})
-				refreshDropdown(data,tmpTxt)
-				wordmarkChange(data,false)
             }
         }
     }
@@ -5119,7 +6043,7 @@
 		e.stopPropagation();
 		e.preventDefault();
 		var files = e.originalEvent.dataTransfer.files;
-		dropFile(files[0].path)
+		dropFile(webUtils.getPathForFile(files[0]))
 		return false;
 	});
 
@@ -5127,7 +6051,9 @@
         if ($.inArray(getExtension(file).toLowerCase(), validFontTypes) > -1) {
             ipcRenderer.send('drop-font', file)
         } else {
+			console.log(getExtension(file).toLowerCase())
             if ($.inArray(getExtension(file).toLowerCase(), validImageTypes) > -1) {
+				showOverlay("Processing Image...")
                 ipcRenderer.send('drop-image', file)
             } else {
                 console.log("it's an invalid file")
@@ -5222,6 +6148,52 @@
 		$("#overlay").css("display","none")
 		$("#overlayText").text(null)
 		$("#overlayText").css("display","none")
+	}
+
+	function GetColorPixel(context, x, y) {
+  		const imageData = context.getImageData(x, y, 1, 1).data;
+  		const rgbColor = [imageData[0], imageData[1], imageData[2]];
+		return rgbColor;
+	}
+
+	function hexToRgb(hex) {
+		// Remove '#' if present
+		hex = hex.replace(/^#/, '');
+
+		// Parse hex values
+		const bigint = parseInt(hex, 16);
+
+		// Extract RGB components
+		const r = (bigint >> 16) & 255;
+		const g = (bigint >> 8) & 255;
+		const b = bigint & 255;
+
+		return { r, g, b };
+	}
+
+	function isColorWithinTolerance(pixelColor, targetColor, tolerance) {
+		const dr = Math.abs(pixelColor.r - targetColor.r);
+		const dg = Math.abs(pixelColor.g - targetColor.g);
+		const db = Math.abs(pixelColor.b - targetColor.b);
+
+		return (dr <= tolerance && dg <= tolerance && db <= tolerance);
+	}
+
+	function isColorMatch(pixels, index, baseColor, targetColor, tolerance) {
+		const dr = Math.abs(baseColor.r - pixels[index]);
+		const dg = Math.abs(baseColor.g - pixels[index + 1]);
+		const db = Math.abs(baseColor.b - pixels[index + 2]);
+
+		return (dr + dg + db) / 3 <= tolerance;
+	}
+
+	function isColorMatchAlpha(pixels, index, baseColor, targetColor, tolerance) {
+		const dr = Math.abs(baseColor.r - pixels[index]);
+		const dg = Math.abs(baseColor.g - pixels[index + 1]);
+		const db = Math.abs(baseColor.b - pixels[index + 2]);
+		const da = Math.abs(baseColor.a - pixels[index + 3]); // Include alpha channel difference
+
+		return (dr + dg + db + da) / 4 <= tolerance
 	}
 </script>
 </html>
