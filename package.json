@@ -20,7 +20,7 @@
     "@alxcube/lens-jimp": "^3.0.0",
     "add-filename-increment": "^1.0.0",
     "chokidar": "^3.5.3",
-    "electron-store": "^8.1.0",
+    "electron-store": "8.2.0",
     "fontname": "^1.0.1",
     "github-version-checker": "^2.3.0",
     "jimp": "0.22.12"

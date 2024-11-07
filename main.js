@@ -291,7 +291,6 @@ function checkForUpdate() {
 	});
 }
  
-
 ipcMain.on('remove-border', (event, arg) => {
 	let imgdata = arg.imgdata
 	let fuzz = parseInt(arg.fuzz)
@@ -693,6 +692,17 @@ ipcMain.on('show-alert', (event, arg) => {
 		type: 'info',
 		message: arg
 	})
+})
+
+ipcMain.on('get-preferences', (event, arg) => {
+	const json = {}
+	json.preferredColorFormat = store.get("preferredColorFormat", "hex")
+	json.preferredCrestSize = store.get("preferredCrestSize", 46)
+	event.sender.send('get-preferences-response', json)
+})
+
+ipcMain.on('set-preference', (event, arg) => {
+	store.set(arg.pref, arg.value)
 })
 
 function getExtension(filename) {

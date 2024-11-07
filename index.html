@@ -30,9 +30,6 @@
 		const { ipcRenderer } = require('electron');
 		const params = new URLSearchParams(window.location.search)
 		const port = params.get('port')
-		const Store = require("electron-store")
-
-		const store = new Store();
 
 		require('./renderer.js')
 
@@ -43,10 +40,6 @@
 		var laceOptions = ['tiedLaces1','tiedLaces2','untiedLaces1'];
 		var defaultTexture = "default_sweater_texture.png";
 		var originalColor = {};
-
-		let prefColorFormat = store.get("preferredColorFormat", "hex")
-
-		console.log(prefColorFormat)
 
 		var fontSources = {
 			Acme: "Acme-Regular.ttf",
@@ -650,6 +643,13 @@
 										</select>
 									</td>
 								</tr>
+								<tr>
+									<td class="checkCell">&nbsp;</td>
+									<td>Preferred Crest Auto-Size:</td>
+									<td style="text-align:right;">
+										<input style="text-align:center; width:50px;" type="number" id="defaultCrestSize" min="20" max="100" value="46">
+									</td>
+								</tr>
 							</table>
 						</div>
 					</div>
@@ -1080,6 +1080,14 @@
 </div>
 </body>
 <script>
+	ipcRenderer.on("get-preferences-response", (event, data) => {
+		console.log($("#colorFormat").val())
+		console.log(data.preferredColorFormat)
+		$("#colorFormat").val(data.preferredColorFormat)
+		$("#defaultCrestSize").val(parseInt(data.preferredCrestSize))
+		console.log($("#colorFormat").val())
+	})
+
 	var spinnerOptions = {lines: 13, length: 28, width: 14, radius: 42, scale: 2, corners: 1, color: '#4283C7', opacity: 0.25, rotate: 0, direction: 1, speed: 1, trail: 60, fps: 20, zIndex: 2e9, className: 'spinner', top: '50%', left: '50%', shadow: false, hwaccel: false, position: 'absolute'}
     var target = document.getElementById('overlay');
     var spinner = new Spinner(spinnerOptions).spin(target);
@@ -1137,6 +1145,7 @@
 	var mmAngle = 0;
 	
 	$(document).ready(function() {
+		ipcRenderer.send("get-preferences", null)
 		$(".accordion .accord-header").click(function() {
 			if($(this).next("div").is(":visible")){
 				$(this).next("div").slideUp("fast");
@@ -1239,11 +1248,15 @@
 	});
 	
 	$("#colorFormat").on("change",function(e) {
-		$.localStorage.setItem('sweaterfactory.color_format', $(this).val());
+		ipcRenderer.send('set-preference', { pref: 'preferredColorFormat', value: $(this).val() })
 		$(".enabledSelector").spectrum("option", "preferredFormat", $(this).val());
 		$(".baseSelector").spectrum("option", "preferredFormat", $(this).val());
 		$(".undershirtSelector").spectrum("option", "preferredFormat", $(this).val());
 	});
+
+	$("#defaultCrestSize").on("change",function(e) {
+		ipcRenderer.send('set-preference', { pref: 'preferredCrestSize', value: parseInt($(this).val()) })
+	})
 
 	initializeCanvas();
 	
@@ -1311,7 +1324,7 @@
 		type: "color",
 		showAlpha: false,
 		showInput: true,
-		preferredFormat: prefColorFormat,
+		preferredFormat: $("#colorFormat").val(),
 		showInitial: true,
 		showPalette: true,
 		showButtons: true,
@@ -1341,7 +1354,7 @@
 		type: "color",
 		showAlpha: false,
 		showInput: true,
-		preferredFormat: prefColorFormat,
+		preferredFormat: $("#colorFormat").val(),
 		showInitial: true,
 		showPalette: true,
 		showButtons: true,
@@ -1390,7 +1403,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1755,7 +1768,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1841,7 +1854,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -1916,7 +1929,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -2027,7 +2040,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -2102,7 +2115,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -2173,7 +2186,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			//preferredFormat: prefColorFormat,
+			//preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -2212,7 +2225,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			//preferredFormat: prefColorFormat,
+			//preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -2272,7 +2285,7 @@
 			type: "color",
 			showAlpha: false,
 			showInput: true,
-			preferredFormat: prefColorFormat,
+			preferredFormat: $("#colorFormat").val(),
 			showInitial: true,
 			showPalette: true,
 			showButtons: true,
@@ -4552,7 +4565,7 @@
 						visible: false
 					});
 					below.add(camoLayer2);
-					below.moveTo(camoLayer2, 3);
+					below.moveTo(camoLayer2, 3);options
 					fabric.loadSVGFromURL('./images/fhm_digiCamoBase.svg',function(svg,options) {
 						digiCamoBase = new fabric.Group(svg,options);
 						digiCamoBase.setOptions ({
@@ -5108,20 +5121,25 @@
 		logoCanvas.renderAll();
 		hideOverlay()
 	})
+
+	$("#defaultCrestSize").on("change",function(e) {
+
+	})
 	
 	$("#makeCrest").on("click",function(e) {
 		showOverlay()	
+		const size = parseInt($("#defaultCrestSize").val())
 		var object = logoCanvas.getActiveObject();
 		if (object.get('type') == "image") {
 			var imageHeight = object.height;
 			var imageWidth = object.width;
-			if (imageHeight > imageWidth && imageHeight > 46) {
-				object.scaleToHeight(46);
-			} else if (imageWidth > imageHeight && imageWidth > 46) {
-				object.scaleToWidth(46);
+			if (imageHeight > imageWidth && imageHeight > size) {
+				object.scaleToHeight(size);
+			} else if (imageWidth > imageHeight && imageWidth > size) {
+				object.scaleToWidth(size);
 			} else {
-				if (imageWidth > 46) {
-					object.scaleToWidth(46);
+				if (imageWidth > size) {
+					object.scaleToWidth(size);
 				} 
 			}
 			object.set({"left":256,"top":341,"angle":0});
