@@ -1183,12 +1183,12 @@ const createWindow = () => {
           click: () => mainWindow.webContents.send("update", "click"),
           label: "Check For Updates",
         },
-        { type: "separator" },
+        /* { type: "separator" },
         {
           click: () => mainWindow.webContents.send("prefs", "click"),
           accelerator: isMac ? "Cmd+Shift+P" : "Control+Shift+P",
           label: "Edit Preferences",
-        },
+        }, */
       ],
     },
   ];
