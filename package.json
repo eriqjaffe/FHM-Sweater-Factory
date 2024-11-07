@@ -18,12 +18,16 @@
   "dependencies": {
     "@alxcube/lens": "^2.0.1",
     "@alxcube/lens-jimp": "^3.0.0",
+    "@resvg/resvg-js": "^2.6.2",
     "add-filename-increment": "^1.0.0",
     "chokidar": "^3.5.3",
     "electron-store": "8.2.0",
     "fontname": "^1.0.1",
     "github-version-checker": "^2.3.0",
-    "jimp": "0.22.12"
+    "heic-convert": "^2.1.0",
+    "image-size": "^1.1.1",
+    "jimp": "0.22.12",
+    "psd": "^3.4.0"
   },
   "devDependencies": {
     "electron": "^33.1.0",

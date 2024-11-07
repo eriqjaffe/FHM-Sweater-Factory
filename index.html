@@ -27,7 +27,7 @@
 	<link href='./scripts/dd.css' rel='stylesheet' type='text/css'>
 	<link href='./scripts/jquery.range.css' rel='stylesheet' type='text/css'>
 	<script>
-		const { ipcRenderer } = require('electron');
+		const { ipcRenderer, webUtils } = require('electron');
 		const params = new URLSearchParams(window.location.search)
 		const port = params.get('port')
 
@@ -105,7 +105,7 @@
 		let fontList = ["Acme", "Athletic Gothic", "Athletic Gothic Shadow", "Fancy Block", "Berkshire Swash", "Cantora", "Caxton Roman", "Chela", "Circus", "Condiment", "Cookie", "Courgette", "Croissant", "Damion", "Engagement", "Fancy Block", "Germania", "Graduate", "Grand Hotel", "Jockey", "Kansas Tuscan", "Kaushan Script", "Leckerli", "Lily Script", "Lobster", "Lobster Two", "Metal Mania", "Miniver", "Molle", "New Rocker", "Norican", "Old English", "Oleo Script", "Oleo Script Swash Caps", "Pacifico", "Pirata", "Playball", "Pro Full Block", "Richardson Block", "Rubik", "Rum Raisin", "Satisfy", "Seymour", "SPL28 Script", "Tiffany Regular", "Trade Winds", "Tuscan", "Unifraktur Cook", "Unifraktur Maguntia", "Vibur", "Viga", "Wellfleet", "Wendy", "Yellowtail"]
 
 		const validFontTypes = ["ttf","otf"]
-		const validImageTypes = ["png","jpg","jpeg","bmp","gif","tiff"]
+		const validImageTypes = ["png","jpg","jpeg","bmp","gif","tiff","webp","svg","psd","heic","heif"]
 	</script>
     <!--[if IE]>
       <style type="text/css">
@@ -2366,11 +2366,77 @@
 	})
 	
 	$("#fakeImageButton").on("click",function() {
+		showOverlay("Processing Image...")
 		ipcRenderer.send('upload-image', null)
 	})
 	
 	ipcRenderer.on('upload-image-response', (event, response) => {
 		addImage(response)
+	})
+
+	ipcRenderer.on('webp-convert', (event, response) => {
+		console.log(response)
+		const img = new Image();
+		img.onload = function() {
+			const tempCanvas = document.createElement('canvas');
+			const tempCtx = tempCanvas.getContext('2d');
+
+			tempCanvas.width = response.width;
+			tempCanvas.height = response.height;
+
+			tempCtx.drawImage(img, 0, 0);
+
+			let convertedImage = tempCanvas.toDataURL()
+
+			const imgObj = new Image()
+			imgObj.onload = function () {
+				let imLeft = 256
+				let imTop = (response.canvas == "jerseyLogoCanvas") ? 512 : 256
+				var image = new fabric.Image(imgObj);
+				image.set({
+					originX: 'center',
+					originY: 'center',
+					perPixelTargetFind: true,
+					centeredScaling: true,
+					centeredRotation: true,
+					name: response.file,
+					id: response.file
+				});
+				image.filters.push(new fabric.Image.filters.Resize({
+					resizeType: 'lanczos', // typo fixed
+					lanczosLobes: 2 // typo fixed
+				}));
+				image.on('object:modified',function() {
+					imLeft = image.get('left')
+					imTop = image.get('top');
+				})
+				image.on('selected',function() {
+					$("#fileName").html(image.get('id'));
+					if ($("#trimImageDiv").css("display") == "none") {
+						$("#trimImageDiv").css("display","block");
+						$("#uploadImageDiv").css("display","none");
+						$("#selectedImageDiv").css("display","block");
+					}
+					$("#tipSpan").html("Use Arrow keys to move image 1 pixel.<br>Use Shift + Arrow keys to move image 10 pixels.<br>Use Delete key to remove image.");
+					$(".copypaste").each(function() {
+						$(this).css("display","inline-block")
+					})
+				})
+				var h = image.height;
+				var w = image.width;
+				logoCanvas.add(image);
+				image.set({"left":256,"top":350});
+				image.setCoords();
+				logoCanvas.bringToFront(image)
+				logoCanvas.setActiveObject(image)
+				logoCanvas.requestRenderAll()
+				logoCanvas.renderAll();
+				tempCanvas.remove()
+				hideOverlay()
+			}
+			imgObj.src = convertedImage
+		}
+		img.src = response.path
 	})
 
 	function addImage(data) {
@@ -2419,7 +2485,7 @@
 			//}
 			logoCanvas.add(image);
 			image.sendBackwards();
-			
+			hideOverlay()
 			// end fabricJS stuff
 		}
 	}
@@ -5645,7 +5711,6 @@
 	}
 
 	ipcRenderer.on("hide-overlay", (event, response) => {
-		console.log("hello world")
 		hideOverlay()
 	})
 
@@ -5978,7 +6043,7 @@
 		e.stopPropagation();
 		e.preventDefault();
 		var files = e.originalEvent.dataTransfer.files;
-		dropFile(files[0].path)
+		dropFile(webUtils.getPathForFile(files[0]))
 		return false;
 	});
 
@@ -5986,7 +6051,9 @@
         if ($.inArray(getExtension(file).toLowerCase(), validFontTypes) > -1) {
             ipcRenderer.send('drop-font', file)
         } else {
+			console.log(getExtension(file).toLowerCase())
             if ($.inArray(getExtension(file).toLowerCase(), validImageTypes) > -1) {
+				showOverlay("Processing Image...")
                 ipcRenderer.send('drop-image', file)
             } else {
                 console.log("it's an invalid file")
