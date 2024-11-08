@@ -49,7 +49,7 @@ const watcher = chokidar.watch(userFontsFolder, {
   persistent: true,
 });
 
-watcher.on("ready", () => {});
+watcher.on("ready", () => { });
 
 const updateOptions = {
   repo: "FHM-Sweater-Factory",
@@ -115,31 +115,31 @@ const fontArray = {
 };
 
 /* ipcMain.on('upload-image', (event, arg) => {
-	let json = {}
-	dialog.showOpenDialog(null, {
-		properties: ['openFile'],
-		filters: [
-			{ name: 'Images', extensions: ["png","jpg","jpeg","bmp","gif","tiff","webp","svg","psd"] }
-		]
-	  }).then(result => {
-		  if(!result.canceled) {
-			Jimp.read(result.filePaths[0], (err, image) => {
-				if (err) {
-					console.log(err);
-				} else {
-					image.getBase64(Jimp.AUTO, (err, ret) => {
-						json.filename = path.basename(result.filePaths[0]),
-						json.image = ret;
-						json.path = result.filePaths[0]
-						event.sender.send('upload-image-response', json)
-						//res.end();
-					})
-				}
-			});
-		  }
-	  }).catch(err => {
-		console.log(err)
-	  })
+  let json = {}
+  dialog.showOpenDialog(null, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'Images', extensions: ["png","jpg","jpeg","bmp","gif","tiff","webp","svg","psd"] }
+    ]
+    }).then(result => {
+      if(!result.canceled) {
+      Jimp.read(result.filePaths[0], (err, image) => {
+        if (err) {
+          console.log(err);
+        } else {
+          image.getBase64(Jimp.AUTO, (err, ret) => {
+            json.filename = path.basename(result.filePaths[0]),
+            json.image = ret;
+            json.path = result.filePaths[0]
+            event.sender.send('upload-image-response', json)
+            //res.end();
+          })
+        }
+      });
+      }
+    }).catch(err => {
+    console.log(err)
+    })
 }) */
 
 ipcMain.on("upload-image", (event, arg) => {
@@ -159,8 +159,8 @@ ipcMain.on("upload-image", (event, arg) => {
           "webp",
           "svg",
           "psd",
-		  "heic",
-		  "heif"
+          "heic",
+          "heif"
         ],
       },
     ],
@@ -176,25 +176,35 @@ ipcMain.on("upload-image", (event, arg) => {
     } else {
       store.set("uploadImagePath", path.dirname(userFile.filePaths[0]));
       switch (getExtension(userFile.filePaths[0]).toLowerCase()) {
-		case "heic":
-			let inputBuffer = fs.readFileSync(userFile.filePaths[0])
-			let outputBuffer = await heicConvert({buffer: inputBuffer, format: 'PNG'})
-			fs.writeFileSync(os.tmpdir()+"/heicParse.png", outputBuffer)
-			fileToRead = os.tmpdir()+"/heicParse.png"
-			break;
-		case "heif":
-			let inputBuffer2 = fs.readFileSync(userFile.filePaths[0])
-			let outputBuffer2 = await heicConvert({buffer: inputBuffer2, format: 'PNG'})
-			fs.writeFileSync(os.tmpdir()+"/heifParse.png", outputBuffer2)
-			fileToRead = os.tmpdir()+"/heifParse.png"
-			break;
-        case "webp":
-          const dimensions = sizeOf(userFile.filePaths[0]);
+        case "heic":
+          let inputBuffer = fs.readFileSync(userFile.filePaths[0])
+          let outputBuffer = await heicConvert({ buffer: inputBuffer, format: 'PNG' })
+          fs.writeFileSync(os.tmpdir() + "/heicParse.png", outputBuffer)
+          fileToRead = os.tmpdir() + "/heicParse.png"
+          break;
+        case "heif":
+          let inputBuffer2 = fs.readFileSync(userFile.filePaths[0])
+          let outputBuffer2 = await heicConvert({ buffer: inputBuffer2, format: 'PNG' })
+          fs.writeFileSync(os.tmpdir() + "/heifParse.png", outputBuffer2)
+          fileToRead = os.tmpdir() + "/heifParse.png"
+          break;
+        case "bmp":
+          let bmpDimensions = sizeOf(arg);
           event.sender.send("webp-convert", {
-            file: path.basename(userFile.filePaths[0]),
-            path: userFile.filePaths[0],
-            width: dimensions.width,
-            height: dimensions.height,
+            file: path.basename(arg),
+            path: arg,
+            width: bmpDimensions.width,
+            height: bmpDimensions.height,
+          });
+          return false;
+          break;
+        case "webp":
+          let webpDimensions = sizeOf(arg);
+          event.sender.send("webp-convert", {
+            file: path.basename(arg),
+            path: arg,
+            width: webpDimensions.width,
+            height: webpDimensions.height,
           });
           return false;
           break;
@@ -232,7 +242,7 @@ ipcMain.on("upload-image", (event, arg) => {
           break;
       }
       const image = await Jimp.read(fileToRead);
-	  image.autocrop()
+      image.autocrop()
       image.getBase64(Jimp.AUTO, (err, ret) => {
         json.path = userFile.filePaths[0];
         json.filename = path.basename(userFile.filePaths[0]);
@@ -349,9 +359,9 @@ ipcMain.on("save-sweater", (event, arg) => {
   const options = {
     defaultPath: increment(
       store.get("downloadPath", app.getPath("downloads")) +
-        "/" +
-        arg.name +
-        ".png",
+      "/" +
+      arg.name +
+      ".png",
       { fs: true }
     ),
   };
@@ -932,25 +942,35 @@ ipcMain.on("drop-image", (event, arg) => {
 
   async function readImage() {
     switch (getExtension(arg).toLowerCase()) {
-	case "heic":
-		let inputBuffer = fs.readFileSync(arg)
-		let outputBuffer = await heicConvert({buffer: inputBuffer, format: 'PNG'})
-		fs.writeFileSync(os.tmpdir()+"/heicParse.png", outputBuffer)
-		fileToRead = os.tmpdir()+"/heicParse.png"
-		break;
-	case "heif":
-		let inputBuffer2 = fs.readFileSync(arg)
-		let outputBuffer2 = await heicConvert({buffer: inputBuffer2, format: 'PNG'})
-		fs.writeFileSync(os.tmpdir()+"/heifParse.png", outputBuffer2)
-		fileToRead = os.tmpdir()+"/heifParse.png"
-		break;
-      case "webp":
-        const dimensions = sizeOf(arg);
+      case "heic":
+        let inputBuffer = fs.readFileSync(arg)
+        let outputBuffer = await heicConvert({ buffer: inputBuffer, format: 'PNG' })
+        fs.writeFileSync(os.tmpdir() + "/heicParse.png", outputBuffer)
+        fileToRead = os.tmpdir() + "/heicParse.png"
+        break;
+      case "heif":
+        let inputBuffer2 = fs.readFileSync(arg)
+        let outputBuffer2 = await heicConvert({ buffer: inputBuffer2, format: 'PNG' })
+        fs.writeFileSync(os.tmpdir() + "/heifParse.png", outputBuffer2)
+        fileToRead = os.tmpdir() + "/heifParse.png"
+        break;
+      case "bmp":
+        let bmpDimensions = sizeOf(arg);
         event.sender.send("webp-convert", {
           file: path.basename(arg),
           path: arg,
-          width: dimensions.width,
-          height: dimensions.height,
+          width: bmpDimensions.width,
+          height: bmpDimensions.height,
+        });
+        return false;
+        break;
+      case "webp":
+        let webpDimensions = sizeOf(arg);
+        event.sender.send("webp-convert", {
+          file: path.basename(arg),
+          path: arg,
+          width: webpDimensions.width,
+          height: webpDimensions.height,
         });
         return false;
         break;
@@ -988,7 +1008,7 @@ ipcMain.on("drop-image", (event, arg) => {
         break;
     }
     const image = await Jimp.read(fileToRead);
-	image.autocrop()
+    image.autocrop()
     image.getBase64(Jimp.AUTO, (err, ret) => {
       json.path = arg;
       json.filename = path.basename(arg);
@@ -1068,21 +1088,21 @@ const createWindow = () => {
     // { role: 'appMenu' }
     ...(isMac
       ? [
-          {
-            label: app.name,
-            submenu: [
-              { role: "about" },
-              { type: "separator" },
-              { role: "services" },
-              { type: "separator" },
-              { role: "hide" },
-              { role: "hideOthers" },
-              { role: "unhide" },
-              { type: "separator" },
-              { role: "quit" },
-            ],
-          },
-        ]
+        {
+          label: app.name,
+          submenu: [
+            { role: "about" },
+            { type: "separator" },
+            { role: "services" },
+            { type: "separator" },
+            { role: "hide" },
+            { role: "hideOthers" },
+            { role: "unhide" },
+            { type: "separator" },
+            { role: "quit" },
+          ],
+        },
+      ]
       : []),
     // { role: 'fileMenu' }
     {
@@ -1130,11 +1150,11 @@ const createWindow = () => {
         { role: "zoom" },
         ...(isMac
           ? [
-              { type: "separator" },
-              { role: "front" },
-              { type: "separator" },
-              { role: "window" },
-            ]
+            { type: "separator" },
+            { role: "front" },
+            { type: "separator" },
+            { role: "window" },
+          ]
           : [{ role: "close" }]),
       ],
     },
